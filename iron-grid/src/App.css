@@ -1,0 +1,22 @@
+/* Existing */
+.App {
+  text-align: center;
+}
+
+/* Add these */
+.main-container {
+  border: 2px solid black;
+  padding: 1rem;
+}
+
+.hero-section,
+.why-us-section,
+.services-section,
+.trainers-section,
+.pricing-section,
+.join-us-section,
+.footer-section {
+  border: 2px solid black;
+  margin: 1rem 0;
+  padding: 1rem;
+}
