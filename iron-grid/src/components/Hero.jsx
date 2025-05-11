@@ -4,10 +4,10 @@ import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
 const navigation = [
-  { name: 'Contact', href: '#' },
-  { name: 'Prices', href: '#' },
-  { name: 'Trainers', href: '#' },
-  { name: 'Why Us', href: '#' },
+  { name: 'CONTACT', href: '#' },
+  { name: 'PRICES', href: '#' },
+  { name: 'TRAINERS', href: '#' },
+  { name: 'WHY US', href: '#' },
 ]
 
 export default function Hero() {
@@ -20,13 +20,13 @@ export default function Hero() {
 
       {/* Header */}
       <header className="absolute inset-x-0 top-0 z-50">
-        <nav aria-label="Global" className="flex items-center justify-between p-6  lg:px-8 rounded-xl my-2 mx-2 bg-gradient-to-r from-gray- to-gray-900">
+        <nav aria-label="Global" className="flex items-center justify-between p-6  lg:px-8 rounded-xl my-2 mx-2 bg-gradient-to-r from-gray-900 to-gray-600">
           <div className="flex lg:flex-1">
             <a href="#" className="-m-1.5 p-1.5">
               <span className="sr-only">Your Company</span>
               <img
-                alt=""
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+                alt="logo"
+                src="/logo.png"
                 className="h-8 w-auto"
               />
             </a>
@@ -43,13 +43,13 @@ export default function Hero() {
           </div>
           <div className="hidden lg:flex lg:gap-x-12">
             {navigation.map((item) => (
-              <a key={item.name} href={item.href} className="text-lg font-stretch-expanded text-white px-5 ">
+              <a key={item.name} href={item.href} className="text-med font-bold text-white px-5 ">
                 {item.name}
               </a>
             ))}
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            <a href="#" className="text-xl font-bold text-white">
+            <a href="#" className="text-xl font-bold text-white border-2 rounded-xl flex justify-center items-center  px-3 py-1">
               Log in <span aria-hidden="true">&rarr;</span>
             </a>
           </div>
