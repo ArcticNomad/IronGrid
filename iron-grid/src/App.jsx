@@ -4,60 +4,119 @@ import viteLogo from '/vite.svg';
 import './App.css';
 import Hero from './components/hero';
 import WhyUs from './components/WhyUs';
-import Services from './components/Services'; // Make sure the import path is correct
+import Services from './components/Services';
+import Trainers from './components/Trainers';
 
 function App() {
   const [count, setCount] = useState(0);
 
   const servicesData = [
     {
-      imageSrc: '/group.jpg', // Path to your first image
+      imageSrc: '/group.jpg',
       title: 'GROUP FITNESS CLASSES',
-      description:
-        'Join our vibrant community through a variety of group fitness classes! From high-energy cardio sessions to calming yoga classes, we have something for everyone.',
+      description: 'Join our vibrant community through a variety of group fitness classes! From high-energy cardio sessions to calming yoga classes, we have something for everyone.',
     },
     {
-      imageSrc: '/freeW.jpg', // Path to your second image
+      imageSrc: '/freeW.jpg',
       title: 'FREE WEIGHTS TRAINING',
-      description:
-        'Experience the freedom of training with free weights! Our gym offers a wide range of free weight equipment, including dumbbells, barbells, and kettlebells.',
+      description: 'Experience the freedom of training with free weights! Our gym offers a wide range of free weight equipment, including dumbbells, barbells, and kettlebells.',
     },
     {
-      imageSrc: '/personal.jpg', // Path to your third image
+      imageSrc: '/personal.jpg',
       title: 'PERSONAL TRAINING',
-      description:
-        'Achieve your fitness goals faster with personalized training sessions! Our certified personal trainers will work with you one-on-one to create a customized workout plan.',
+      description: 'Achieve your fitness goals faster with personalized training sessions! Our certified personal trainers will work with you one-on-one to create a customized workout plan.',
+    },
+  ];
+
+  const trainersData = [
+    {
+      imageSrc: '/trainer.jpg',
+      name: 'THOMAS PERRY',
+      specialty: 'Strength Training',
+      descriptionItems: [
+        'Personalized training programs',
+        'Functional training using kettlebells and TRX',
+        'Nutrition and supplement advice',
+      ],
+    },
+    {
+      imageSrc: '/trainer.jpg',
+      name: 'ALEX MITCHELL',
+      specialty: 'Group Training',
+      descriptionItems: [
+        'High-intensity bootcamp sessions',
+        'Crossfit and endurance training',
+        'Mental training and motivation coaching',
+      ],
+    },
+    {
+      imageSrc: '/trainer.jpg',
+      name: 'ETHAN COLLINS',
+      specialty: 'Mobility & Recovery',
+      descriptionItems: [
+        'Therapeutic stretching sessions',
+        'Yoga and mobility training',
+        'Mindfulness and breathing techniques',
+      ],
     },
   ];
 
   return (
-    <>
-      <main className="bg-gradient-to-r from-gray-700 via-gray-900 to-gray-700 ">
-        <section className="Hero">
-          <Hero />
-        </section>
+    <div className="bg-gray-900 text-white">
+      {/* Hero Section */}
+      <section className="hero-section">
+        <Hero />
+      </section>
 
-        <section className="WhyUs shadow-2xl py-20">
-          <WhyUs />
-        </section>
+      {/* Why Us Section */}
+      <section className="why-us-section py-20 bg-gradient-to-b from-gray-800 to-gray-900">
+        <WhyUs />
+      </section>
 
-        <section className="Services relative shadow-2xl bg-gradient-to-r from-gray-700 via-gray-900 to-gray-700 flex justify-center gap-[3vh] mb-20 py-12 px-14">
-          <h1 className='absolute top-[2%] text-white text-5xl font-bold '>OUR <span className='text-red-400'>SERVICES</span></h1>
-          {servicesData.map((service, index) => (
-            <Services
-              key={index}
-              imageSrc={service.imageSrc}
-              title={service.title}
-              description={service.description}
-            />
-          ))}
-        </section>
+      {/* Services Section */}
+      <section className="services-section relative py-24 bg-gray-900 ">
+        <div className="container mx-auto px-4">
+          <h2 className="absolute top-10 left-0 right-0 text-center text-4xl md:text-5xl font-bold uppercase tracking-wide">
+            OUR <span className="text-red-400 underline">SERVICES</span>
+          </h2>
+          <div className="flex flex-wrap justify-center gap-8 mt-20">
+            {servicesData.map((service, index) => (
+              <Services
+                key={index}
+                imageSrc={service.imageSrc}
+                title={service.title}
+                description={service.description}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
 
-         <section className="bg-gradient-to-r from-gray-700 via-gray-900 to-gray-700 ">
-          <WhyUs />
-        </section>
-      </main>
-    </>
+      {/* Trainers Section */}
+      <section className="trainers-section relative py-24 bg-gradient-to-b from-gray-900 to-gray-800">
+        <div className="container mx-auto px-4">
+          <h2 className="absolute top-10 left-0 right-0 text-center text-4xl md:text-5xl font-bold uppercase tracking-wide">
+            OUR <span className="text-red-400 underline">TRAINERS</span>
+          </h2>
+          <div className="flex flex-wrap justify-center gap-8 mt-20">
+            {trainersData.map((trainer, index) => (
+              <Trainers
+                key={index}
+                imageSrc={trainer.imageSrc}
+                name={trainer.name}
+                specialty={trainer.specialty}
+                descriptionItems={trainer.descriptionItems}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta-section py-20 bg-gray-800">
+        <WhyUs />
+      </section>
+    </div>
   );
 }
 
