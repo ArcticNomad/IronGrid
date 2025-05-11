@@ -4,6 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import Hero from './components/hero'
 import WhyUs from './components/WhyUs'
+import Services from './components/Services'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -20,6 +21,9 @@ function App() {
       <WhyUs/>
     </section>
     
+     <section className='WhyUs shadow-2xl'>
+      <Services/>
+    </section>
 
     </main>
     
