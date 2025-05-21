@@ -2,13 +2,20 @@ import { useState } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
-import Hero from './components/hero';
+import Hero from './components/Hero';
 import WhyUs from './components/WhyUs';
 import Services from './components/Services';
 import Trainers from './components/Trainers';
 import Prices from './components/Prices';
 import JoinUs from './components/JoinUs';
-function App() {
+import Registration from './pages/Registration';
+import Home from './pages/Home';
+import { Routes, Route, Router, Link } from 'react-router-dom'
+
+
+
+
+function App() {  
   const [count, setCount] = useState(0);
 
   const servicesData = [
@@ -135,6 +142,7 @@ const pricingData = [
 ];
 
   return (
+    
     <div className="bg-gray-900 text-white">
       {/* Hero Section */}
       <section className="hero-section">
@@ -205,8 +213,7 @@ const pricingData = [
         <section className="hero-section">
         <JoinUs />
       </section>
-
-
+    
     </div>
   );
 }

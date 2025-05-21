@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Link } from 'react-router-dom'
 
 const navigation = [
   { name: 'CONTACT', href: '#' },
@@ -9,6 +10,8 @@ const navigation = [
   { name: 'TRAINERS', href: '#' },
   { name: 'WHY US', href: '#' },
 ]
+
+function navigateToReg(){}
 
 export default function Hero() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -21,6 +24,7 @@ export default function Hero() {
       {/* Header */}
       <header className="absolute inset-x-0 top-0 z-50">
         <nav aria-label="Global" className="flex items-center justify-between p-6 border-2 border-white lg:px-8 rounded-xl my-2 mx-2 bg-gradient-to-r from-gray-900 to-gray-600">
+          
           <div className="flex lg:flex-1">
             <a href="#" className="-m-1.5 p-1.5">
               <span className="sr-only">Your Company</span>
@@ -34,7 +38,7 @@ export default function Hero() {
           <div className="flex lg:hidden">
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(true)}
+              onClick={() => navigateToReg(true)}
               className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white"
             >
               <span className="sr-only">Open main menu</span>
@@ -49,9 +53,9 @@ export default function Hero() {
             ))}
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            <a href="#" className="text-xl font-bold text-white border-2 rounded-xl flex justify-center items-center  px-3 py-1">
+            <Link to="/login" className="text-xl font-bold text-white border-2 rounded-xl flex justify-center items-center  px-3 py-1">
               Log in <span aria-hidden="true">&rarr;</span>
-            </a>
+            </Link>
           </div>
         </nav>
         <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
