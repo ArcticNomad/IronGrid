@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Popup from './Popup';
 
 const MemberRegistrationForm = () => {
+  
+  function onClose(){
+    setShowPopup=!showPopup
+  }
+
   const navigate = useNavigate();
+  let [showPopup, setShowPopup] = useState(true);
   const [formData, setFormData] = useState({
     height: '',
+    username:'',
     current_weight: '',
     target_weight: '',
     fitness_level: 5,
@@ -29,8 +37,24 @@ const fitnessLevels = [
     { value: 'maintenance', label: 'Maintenance' }
   ];
 
+  const [error,setError]=useState();
+
+  const validateWeight=(name, value)=>{
+  const numValue=value
+  if (numValue <= 0) return 'Weight must be positive';
+  if (numValue < 20) return 'Weight seems too low';
+  if (numValue > 300) return 'Weight seems too high';
+  return '';
+  }
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if(name=='current_weight' || name=='target_weight'){
+      setFormData(prev => ({
+      ...prev,
+      [name]: validateWeight(name, value)
+    }));
+    }
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -42,7 +66,7 @@ const fitnessLevels = [
   const handleCmToFeet = (cm) => {
     if (!cm) return '';
     const feet = cm / 30.48;
-    return feet.toFixed(2);
+    return feet.toFixed(1);
   };
 
   const toggleUnit=(e)=>{
@@ -53,7 +77,7 @@ const fitnessLevels = [
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/member/register', {
+      const response = await fetch('/register/MemberRegistration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +96,7 @@ const fitnessLevels = [
       }
 
       alert('Member registration complete!');
-      navigate('/dashboard'); // Redirect to dashboard after success
+    
     } catch (error) {
       console.error('Error:', error);
       alert('Registration failed. Please try again.');
@@ -81,6 +105,10 @@ const fitnessLevels = [
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+      
+      {showPopup && <Popup onClose={() => setShowPopup(false)} mes={'Please fill out the member registration form before continuing.'} />}
+
+
       <h2 className="text-2xl font-bold mb-6 text-center">Member Registration</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Height */}
@@ -90,10 +118,10 @@ const fitnessLevels = [
           </label>
           <input
             type="number"
-            step="0.01"
+            step="0.1"
             name="height"
             value={ShowInFeet ? handleCmToFeet(formData.height) : formData.height}
-                 onChange={(e) => {
+            onChange={(e) => {
               const value = ShowInFeet 
                 ? parseFloat(e.target.value) * 30.48 
                 : e.target.value;
@@ -101,6 +129,8 @@ const fitnessLevels = [
             }}
             className="mt-1 block w-full h-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             required
+            min={ShowInFeet ? '3' : '100'}
+            max={ShowInFeet ? '8' : '250'}
           />
           
           <button  
@@ -123,6 +153,8 @@ const fitnessLevels = [
             onChange={handleChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             required
+             min="20"
+             max="200"
           />
         </div>
 
@@ -138,7 +170,8 @@ const fitnessLevels = [
             value={formData.target_weight}
             onChange={handleChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            required
+            min="20"
+            max="200"
           />
         </div>
 

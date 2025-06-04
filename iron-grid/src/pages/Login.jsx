@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -24,11 +27,47 @@ const LoginPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
       console.log('Login data:', formData);
-      // Add your authentication logic here
+      
+      try{
+        const response=await fetch('/login',{
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        })
+
+        const data = await response.json();
+        if(!response.ok){
+           throw new Error(data.message || 'Login failed');
+        }
+
+        // check the response and show the appropriate reg page 
+
+        if(data.message==='NEW_MEMBER'){
+          
+          navigate('/MemberRegistration')
+        }else if(data.message=='USER_IS_A_MEMBER'){
+          navigate('/MemberDash')
+        }
+        
+        if(data.message=='NEW_TRAINER'){
+          navigate('/TrainerRegistration')
+        }else if(data.message=='USER_IS_A_TRAINER'){
+          navigate('/TrainerDash')
+        }
+        
+        
+
+
+      }catch(error){
+          console.error('Login failed:', error.message);
+    alert(`Login failed: ${error.message}`);
+      }
     }
   };
 
@@ -102,7 +141,7 @@ const LoginPage = () => {
 
           <div>
             <button
-              onClick={handleSubmit}
+              
               type="submit"
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >

@@ -81,6 +81,7 @@ const verifyAccessCode = () => {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+
   if (formData.password !== formData.confirmPassword) {
     alert("Passwords don't match!");
     return;
@@ -88,7 +89,7 @@ const handleSubmit = async (e) => {
 
   try {
 
-    console.log('trying to submit data to backend ')
+    console.log('trying to submit data to backend ') // test
 
     const response = await fetch('/register', {
       method: 'POST',
