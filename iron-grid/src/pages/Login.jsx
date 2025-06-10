@@ -1,28 +1,28 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
+    username: "",
+    password: "",
   });
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
-    if (!formData.password) newErrors.password = 'Password is required';
+    if (!formData.username.trim()) newErrors.username = "Username is required";
+    if (!formData.password) newErrors.password = "Password is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -30,44 +30,40 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log('Login data:', formData);
-      
-      try{
-        const response=await fetch('/login',{
-          method: 'POST',
+      console.log("Login data:", formData);
+
+      try {
+        const response = await fetch("/login", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData)
-        })
+          body: JSON.stringify(formData),
+        });
 
         const data = await response.json();
-        if(!response.ok){
-           throw new Error(data.message || 'Login failed');
+        if (!response.ok) {
+          throw new Error(data.message || "Login failed");
         }
 
-        // check the response and show the appropriate reg page 
+        // check the response and show the appropriate reg page
 
-        if(data.message==='NEW_MEMBER'){
-          
-          navigate('/MemberRegistration')
-        }else if(data.message=='USER_IS_A_MEMBER'){
-          navigate('/MemberDash')
+        if (data.message === "NEW_MEMBER") {
+          navigate("/MemberRegistration");
+        } else if (data.message == "USER_IS_A_MEMBER") {
+          navigate("/MemberDash");
         }
-        
-        if(data.message=='NEW_TRAINER'){
-          navigate('/TrainerRegistration')
-        }else if(data.message=='USER_IS_A_TRAINER'){
-          navigate('/TrainerDash')
+
+        if (data.message == "NEW_TRAINER") {
+          navigate("/TrainerRegistration");
+        } else if (data.message == "USER_IS_A_TRAINER") {
+          navigate("/TrainerDash");
         }
-        
-        localStorage.setItem('username', formData.username);
 
-
-
-      }catch(error){
-          console.error('Login failed:', error.message);
-    alert(`Login failed: ${error.message}`);
+        localStorage.setItem("username", formData.username);
+      } catch (error) {
+        console.error("Login failed:", error.message);
+        alert(`Login failed: ${error.message}`);
       }
     }
   };
@@ -83,7 +79,10 @@ const LoginPage = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Username
               </label>
               <input
@@ -92,7 +91,9 @@ const LoginPage = () => {
                 type="text"
                 autoComplete="username"
                 required
-                className={`mt-1 block w-full px-3 py-2 border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                className={`mt-1 block w-full px-3 py-2 border ${
+                  errors.username ? "border-red-500" : "border-gray-300"
+                } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
                 value={formData.username}
                 onChange={handleChange}
               />
@@ -101,7 +102,10 @@ const LoginPage = () => {
               )}
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <input
@@ -110,7 +114,9 @@ const LoginPage = () => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className={`mt-1 block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                className={`mt-1 block w-full px-3 py-2 border ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
                 value={formData.password}
                 onChange={handleChange}
               />
@@ -120,29 +126,8 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                Forgot your password?
-              </a>
-            </div>
-          </div>
-
           <div>
             <button
-              
               type="submit"
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
@@ -152,8 +137,11 @@ const LoginPage = () => {
         </form>
 
         <div className="text-center text-sm text-gray-600">
-          Not a member?{' '}
-          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+          Not a member?{" "}
+          <Link
+            to="/register"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
             Sign up now
           </Link>
         </div>
