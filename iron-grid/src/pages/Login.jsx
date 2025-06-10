@@ -45,8 +45,11 @@ const LoginPage = () => {
         if (!response.ok) {
           throw new Error(data.message || "Login failed");
         }
-
+        
         // check the response and show the appropriate reg page
+        
+          localStorage.setItem("username", formData.username);
+          localStorage.setItem("user_id", data.user_id);
 
         if (data.message === "NEW_MEMBER") {
           navigate("/MemberRegistration");
@@ -59,8 +62,6 @@ const LoginPage = () => {
         } else if (data.message == "USER_IS_A_TRAINER") {
           navigate("/TrainerDash");
         }
-
-        localStorage.setItem("username", formData.username);
       } catch (error) {
         console.error("Login failed:", error.message);
         alert(`Login failed: ${error.message}`);

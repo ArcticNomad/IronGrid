@@ -1,90 +1,99 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Popup from './Popup';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Popup from "./Popup";
 const TrainerRegistration = () => {
-  
-   function onClose(){
-      setShowPopup=!showPopup
-    }
-    
-    let [showPopup, setShowPopup] = useState(true);
-  
-    const navigate = useNavigate();
+  function onClose() {
+    setShowPopup = !showPopup;
+  }
 
-    const [formData, setFormData] = useState({
-    username: localStorage.getItem('username'),  
-    certification: '',
-    specialization: '',
-    years_experience: '',
-    hourly_rate: '',
-    bio: '',
-    is_admin: true
+  let [showPopup, setShowPopup] = useState(true);
+
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    username: localStorage.getItem("username"),
+    certification: "",
+    specialization: "",
+    years_experience: "",
+    hourly_rate: "",
+    bio: "",
+    is_admin: true,
   });
 
   const specializations = [
-    'Strength Training',
-    'Weight Loss',
-    'Bodybuilding',
-    'Yoga',
-    'Rehabilitation',
-    'Nutrition'
+    "Strength Training",
+    "Weight Loss",
+    "Bodybuilding",
+    "Yoga",
+    "Rehabilitation",
+    "Nutrition",
   ];
 
   const certifications = [
-    'NASM Certified Personal Trainer',
-    'ACE Personal Trainer',
-    'ACSM Certified Exercise Physiologist',
-    'ISSA Certified Fitness Trainer',
-    'NSCA Certified Strength and Conditioning Specialist',
-    'Other',
-    'None'
+    "NASM Certified Personal Trainer",
+    "ACE Personal Trainer",
+    "ACSM Certified Exercise Physiologist",
+    "ISSA Certified Fitness Trainer",
+    "NSCA Certified Strength and Conditioning Specialist",
+    "Other",
+    "None",
   ];
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/TrainerRegistration', {
-        method: 'POST',
+      const response = await fetch("/TrainerRegistration", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data.message || "Registration failed");
       }
 
-      alert('Trainer registration successful!');
+      alert("Trainer registration successful!");
 
-      if(data.success===true){
-        navigate('/TrainerDash');
+      if (data.success === true) {
+        navigate("/TrainerDash");
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       alert(`Registration failed: ${error.message}`);
     }
   };
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-        {showPopup && <Popup onClose={() => setShowPopup(false)} mes={'Please fill out the trainer registration form before continuing.'} />}
-      <h2 className="text-2xl font-bold mb-6 text-center">Trainer Registration</h2>
+      {showPopup && (
+        <Popup
+          onClose={() => setShowPopup(false)}
+          mes={
+            "Please fill out the trainer registration form before continuing."
+          }
+        />
+      )}
+      <h2 className="text-2xl font-bold mb-6 text-center">
+        Trainer Registration
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-    
-
         {/* Certification */}
         <div>
-          <label htmlFor="certification" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="certification"
+            className="block text-sm font-medium text-gray-700"
+          >
             Certification
           </label>
           <select
@@ -96,15 +105,20 @@ const TrainerRegistration = () => {
             onChange={handleChange}
           >
             <option value="">Select your certification</option>
-            {certifications.map(cert => (
-              <option key={cert} value={cert}>{cert}</option>
+            {certifications.map((cert) => (
+              <option key={cert} value={cert}>
+                {cert}
+              </option>
             ))}
           </select>
         </div>
 
         {/* Specialization */}
         <div>
-          <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="specialization"
+            className="block text-sm font-medium text-gray-700"
+          >
             Specialization
           </label>
           <select
@@ -115,15 +129,20 @@ const TrainerRegistration = () => {
             onChange={handleChange}
           >
             <option value="">Select your specialization</option>
-            {specializations.map(spec => (
-              <option key={spec} value={spec}>{spec}</option>
+            {specializations.map((spec) => (
+              <option key={spec} value={spec}>
+                {spec}
+              </option>
             ))}
           </select>
         </div>
 
         {/* Years of Experience */}
         <div>
-          <label htmlFor="years_experience" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="years_experience"
+            className="block text-sm font-medium text-gray-700"
+          >
             Years of Experience
           </label>
           <input
@@ -140,7 +159,10 @@ const TrainerRegistration = () => {
 
         {/* Hourly Rate */}
         <div>
-          <label htmlFor="hourly_rate" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="hourly_rate"
+            className="block text-sm font-medium text-gray-700"
+          >
             Hourly Rate ($)
           </label>
           <input
@@ -157,7 +179,10 @@ const TrainerRegistration = () => {
 
         {/* Bio */}
         <div>
-          <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="bio"
+            className="block text-sm font-medium text-gray-700"
+          >
             Bio
           </label>
           <textarea
@@ -180,7 +205,10 @@ const TrainerRegistration = () => {
             checked={formData.is_admin}
             onChange={handleChange}
           />
-          <label htmlFor="is_admin" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="is_admin"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Admin Privileges
           </label>
         </div>

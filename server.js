@@ -39,6 +39,9 @@ app.get("/MemberRegistration", (req, res) => {
   res.sendFile(path.join(__dirname, "iron-grid", "dist", "index.html"));
 });
 
+app.get('/MemberDash', (req,res)=>{
+  res.sendFile(path.join(__dirname, "iron-grid", "dist", "index.html"));
+})
 app.post("/register", async (req, res) => {
   const {
     username,
@@ -250,10 +253,9 @@ app.post("/TrainerRegistration", async (req, res) => {
     console.log(result);
 
     res.status(200).json({
-      success:true,
-      message:'Trainer Registered Successfully',
-    })
-
+      success: true,
+      message: "Trainer Registered Successfully",
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
