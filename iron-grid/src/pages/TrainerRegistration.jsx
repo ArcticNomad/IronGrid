@@ -1,9 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import Popup from './Popup';
 const TrainerRegistration = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  
+   function onClose(){
+      setShowPopup=!showPopup
+    }
+    
+    let [showPopup, setShowPopup] = useState(true);
+  
+    const navigate = useNavigate();
+
+    const [formData, setFormData] = useState({
+    username: localStorage.getItem('username'),  
     certification: '',
     specialization: '',
     years_experience: '',
@@ -42,7 +51,7 @@ const TrainerRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/register/trainer', {
+      const response = await fetch('/TrainerRegistration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +65,10 @@ const TrainerRegistration = () => {
       }
 
       alert('Trainer registration successful!');
-      navigate('/TrainerDash');
+
+      if(data.success===true){
+        navigate('/TrainerDash');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       alert(`Registration failed: ${error.message}`);
@@ -65,6 +77,7 @@ const TrainerRegistration = () => {
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+        {showPopup && <Popup onClose={() => setShowPopup(false)} mes={'Please fill out the trainer registration form before continuing.'} />}
       <h2 className="text-2xl font-bold mb-6 text-center">Trainer Registration</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
     

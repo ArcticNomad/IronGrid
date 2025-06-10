@@ -61,7 +61,8 @@ const LoginPage = () => {
           navigate('/TrainerDash')
         }
         
-        
+        localStorage.setItem('username', formData.username);
+
 
 
       }catch(error){

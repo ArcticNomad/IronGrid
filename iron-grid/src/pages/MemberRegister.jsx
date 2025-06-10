@@ -2,17 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Popup from './Popup';
 
-const MemberRegistrationForm = () => {
+const username = localStorage.getItem('username');
+
+const MemberRegistration = () => {
   
   function onClose(){
     setShowPopup=!showPopup
   }
-
-  const navigate = useNavigate();
+  
   let [showPopup, setShowPopup] = useState(true);
+  const navigate = useNavigate();
+ 
+
   const [formData, setFormData] = useState({
-    height: '',
     username:'',
+    height: '',
     current_weight: '',
     target_weight: '',
     fitness_level: 5,
@@ -20,6 +24,7 @@ const MemberRegistrationForm = () => {
     medical_conditions: '',
     dietary_preferences: ''
   });
+
 
 const fitnessLevels = [
   { 1: 'Beginner' },
@@ -77,13 +82,14 @@ const fitnessLevels = [
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/register/MemberRegistration', {
+      const response = await fetch(' /MemberRegistration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ...formData,
+          username: localStorage.getItem('username'),
           height: parseFloat(formData.height),
           current_weight: parseFloat(formData.current_weight),
           target_weight: parseFloat(formData.target_weight),
@@ -91,12 +97,18 @@ const fitnessLevels = [
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
         throw new Error('Registration failed');
       }
 
       alert('Member registration complete!');
-    
+      
+      if(data.message='Member Registered Succesfully'){
+        navigate('/MemberDash')
+      }
+
     } catch (error) {
       console.error('Error:', error);
       alert('Registration failed. Please try again.');
@@ -265,4 +277,4 @@ const fitnessLevels = [
   );
 };
 
-export default MemberRegistrationForm;
+export default MemberRegistration;
