@@ -66,14 +66,14 @@ export default function MemberDash() {
         <nav>
           {[
             { id: 'dashboard', icon: 'menu.png', label: 'Dashboard' },
-            { id: 'profile', icon: 'user.png', label: 'Profile' },
             { id: 'workout', icon: 'report.png', label: 'Workout Plan' },
             { id: 'diet', icon: 'diet.png', label: 'Diet Plan' },
             { id: 'progress', icon: 'roadmap.png', label: 'Progress' },
             { id: 'sessions', icon: 'person.png', label: 'Workout Sessions' },
             { id: 'library', icon: 'book.png', label: 'Library' },
             { id: 'trainer', icon: 'whistle.png', label: 'My Trainer' },
-            { id: 'notifications', icon: 'notification.png', label: 'Notifications' }
+            { id: 'notifications', icon: 'notification.png', label: 'Notifications' },
+            { id: 'profile', icon: 'user.png', label: 'Profile' },
           ].map((tab) => (
             <button  
               key={tab.id}

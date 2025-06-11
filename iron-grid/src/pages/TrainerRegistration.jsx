@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Popup from "./Popup";
 const TrainerRegistration = () => {
   function onClose() {
@@ -7,8 +8,28 @@ const TrainerRegistration = () => {
   }
 
   let [showPopup, setShowPopup] = useState(true);
-
+  let [mess,setmess]=useState('')
+  const [userInfo, setUserInfo] = useState({ user_id: "", accountType: "" });
+    const[showButton, SetShowButton]=useState(true);
   const navigate = useNavigate();
+
+    useEffect(() => {
+      const user_id = localStorage.getItem("user_id");
+      const accountType = localStorage.getItem("account_type");
+  
+      if (!user_id ) {
+        setShowPopup(true); // Show popup
+        SetShowButton(false);
+        setmess('Please Log in First')
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000); // navigate after 1.5s
+      } else {
+        setUserInfo({ user_id, accountType });
+        setmess('Please fill out the member registration form before continuing.');
+        SetShowButton(true);
+      }
+    }, [navigate]);
 
   const [formData, setFormData] = useState({
     username: localStorage.getItem("username"),
@@ -80,7 +101,7 @@ const TrainerRegistration = () => {
         <Popup
           onClose={() => setShowPopup(false)}
           mes={
-            "Please fill out the trainer registration form before continuing."
+            mess
           }
         />
       )}
