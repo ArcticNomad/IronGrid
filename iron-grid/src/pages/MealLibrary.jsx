@@ -97,6 +97,7 @@ const MealLibrary = () => {
 
   const [activeType, setActiveType] = useState('All');
   const [showAddForm, setShowAddForm] = useState(false);
+  
   const [newMeal, setNewMeal] = useState({
     name: '',
     type: 'breakfast',

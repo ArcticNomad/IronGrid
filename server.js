@@ -42,6 +42,104 @@ app.get("/MemberRegistration", (req, res) => {
 app.get('/MemberDash', (req,res)=>{
   res.sendFile(path.join(__dirname, "iron-grid", "dist", "index.html"));
 })
+app.get('/TrainerDash', (req,res)=>{
+  res.sendFile(path.join(__dirname, "iron-grid", "dist", "index.html"));
+})
+
+app.get('/profile', async (req, res) => {
+  const user_id = req.query.user_id;
+  
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    // Base user information
+    const [userRows] = await pool.query(
+      `SELECT 
+        user_id, 
+        username, 
+        email, 
+        first_name,
+        last_name,
+        account_type,
+        gender,
+        registration_date
+      FROM user 
+      WHERE user_id = ?`,
+      [user_id]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userData = userRows[0];
+    const responseData = { ...userData };
+
+    // Add trainer-specific data if account is trainer
+    if (userData.account_type === 'trainer') {
+      const [trainerRows] = await pool.query(
+        `SELECT 
+          specialization,
+          certification,
+          years_experience ,
+          hourly_rate
+        FROM trainer
+        WHERE user_id = ?`,
+        [user_id]
+      );
+      
+      if (trainerRows.length > 0) {
+        responseData.trainer_info = trainerRows[0];
+      }
+    }
+    // Add member-specific data if account is member
+    else if (userData.account_type === 'member') {
+      const [memberRows] = await pool.query(
+        `SELECT 
+          height,
+          current_weight,
+          target_weight,
+          fitness_level ,
+          primary_goal,
+          medical_conditions ,
+          dietary_preferences 
+        FROM member
+        WHERE user_id = ?`,
+        [user_id]
+      );
+      
+      if (memberRows.length > 0) {
+        responseData.member_info = memberRows[0];
+      }
+
+      // Get active plans for members
+      const [planRows] = await pool.query(
+        `SELECT 
+          plan_id,
+          plan_name,
+          start_date,
+          end_date,
+          status
+        FROM member_plans 
+        WHERE user_id = ? AND status = 'active'`,
+        [user_id]
+      );
+      
+      responseData.active_plans = planRows;
+    }
+
+    res.json(responseData);
+  } catch (err) {
+    console.error('Profile error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+
+
+
 app.post("/register", async (req, res) => {
   const {
     username,

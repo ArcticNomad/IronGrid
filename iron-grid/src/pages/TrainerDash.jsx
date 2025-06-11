@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ExerciseLibrary from "./ExerciseLibrary";
 import MealLibrary from "./MealLibrary";
 import Plans from "./Plans";
+import Profile from "./Profile";
 
 export default function TrainerDash() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -155,6 +156,10 @@ export default function TrainerDash() {
               <p>Client list and management tools would appear here</p>
             </div>
           </div>
+        )}
+         {/* Profile */}
+        {activeTab === 'profile' && (
+         <Profile/>
         )}
 
         {/* Other tabs would be implemented similarly */}
