@@ -6,7 +6,9 @@ import Plans from "./Plans";
 import Profile from "./Profile";
 
 export default function TrainerDash() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  
+ const [activeTab, setActiveTab] = useState('dashboard');
+
   const navigate = useNavigate();
 
   // Sample trainer data

@@ -1,59 +1,85 @@
-import { useState } from 'react';
+import { use } from 'react';
+import { useEffect, useState } from 'react';
 
 const ExerciseLibrary = () => {
-  const [exercises, setExercises] = useState([
-    // Cardio
-    { name: 'Jumping Jacks', category: 'Cardio', equipment: 'None', difficulty: 'Beginner', calories: 8.0 },
-    { name: 'Burpees', category: 'Cardio', equipment: 'None', difficulty: 'Advanced', calories: 10.0 },
-    { name: 'High Knees', category: 'Cardio', equipment: 'None', difficulty: 'Intermediate', calories: 9.0 },
-    { name: 'Mountain Climbers', category: 'Cardio', equipment: 'None', difficulty: 'Intermediate', calories: 8.5 },
-    { name: 'Skaters', category: 'Cardio', equipment: 'None', difficulty: 'Intermediate', calories: 8.0 },
-    
-    // Strength
-    { name: 'Push-Ups', category: 'Strength', equipment: 'None', difficulty: 'Intermediate', calories: 7.5 },
-    { name: 'Pull-Ups', category: 'Strength', equipment: 'Bar', difficulty: 'Advanced', calories: 8.0 },
-    { name: 'Squats', category: 'Strength', equipment: 'None', difficulty: 'Beginner', calories: 6.0 },
-    { name: 'Lunges', category: 'Strength', equipment: 'None', difficulty: 'Beginner', calories: 6.5 },
-    { name: 'Deadlifts', category: 'Strength', equipment: 'Barbell', difficulty: 'Advanced', calories: 7.0 },
-    
-    // Flexibility
-    { name: 'Hamstring Stretch', category: 'Flexibility', equipment: 'Mat', difficulty: 'Beginner', calories: 2.0 },
-    { name: 'Cat-Cow Stretch', category: 'Flexibility', equipment: 'Mat', difficulty: 'Beginner', calories: 2.0 },
-    { name: 'Child\'s Pose', category: 'Flexibility', equipment: 'Mat', difficulty: 'Beginner', calories: 1.5 },
-    { name: 'Shoulder Rolls', category: 'Flexibility', equipment: 'None', difficulty: 'Beginner', calories: 1.0 },
-    { name: 'Side Bend', category: 'Flexibility', equipment: 'None', difficulty: 'Beginner', calories: 1.2 },
-    
-    // Balance
-    { name: 'Single-Leg Stand', category: 'Balance', equipment: 'None', difficulty: 'Beginner', calories: 3.0 },
-    { name: 'Tree Pose', category: 'Balance', equipment: 'Mat', difficulty: 'Beginner', calories: 2.5 },
-    { name: 'Bosu Ball Squats', category: 'Balance', equipment: 'Bosu Ball', difficulty: 'Intermediate', calories: 5.5 },
-    { name: 'Heel-To-Toe Walk', category: 'Balance', equipment: 'None', difficulty: 'Beginner', calories: 2.0 },
-    { name: 'Stork Stance', category: 'Balance', equipment: 'None', difficulty: 'Beginner', calories: 2.0 }
-  ]);
-
+  const [exercises, setExercises] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showError, setShowError] = useState(false);
+  
   const [newExercise, setNewExercise] = useState({
     name: '',
     category: 'Cardio',
     equipment: 'None',
     difficulty: 'Beginner',
     calories: 0,
-    instructions: ''
+    instructions: '',
+    video_url:''
   });
 
-  const categories = ['All', 'Cardio', 'Strength', 'Flexibility', 'Balance'];
+  const categories = ['All', 'cardio', 'strength', 'flexibility', 'balance'];
   const equipmentOptions = ['None', 'Mat', 'Bar', 'Barbell', 'Dumbbells', 'Kettlebells', 'Resistance Bands', 'Bosu Ball', 'Medicine Ball'];
   const difficultyOptions = ['Beginner', 'Intermediate', 'Advanced'];
 
-  const filteredExercises = activeCategory === 'All' 
-    ? exercises 
-    : exercises.filter(ex => ex.category === activeCategory);
+  // Fetch exercises from backend
 
-  const handleAddExercise = (exerciseName) => {
-    console.log(`Added ${exerciseName} to workout`);
-    // You would implement your actual add logic here
-  };
+   const fetchExercises = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        setShowError(false);
+        
+        const response = await fetch('/getExercises');
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to fetch exercises');
+        }
+
+        const data = await response.json();
+
+        
+        console.log("Fetched data:", data);
+
+        if (!data.data || data.data.length === 0) {
+          setShowError(true);
+          setError('No Exercises Added To Library Yet!');
+          setExercises([]);
+        } else {
+          const mappedExercises = data.data.map(ex => ({
+    exercise_id: ex.exercise_id,
+    trainer_id: ex.trainer_id,
+    name: ex.ex_name,
+    category: ex.category,
+    equipment: ex.equipment_needed,
+    difficulty: ex.difficulty,
+    calories: ex.calories_burned_per_min,
+    instructions: ex.instructions,
+    video_url:ex.video_url
+  }));
+
+  setExercises(mappedExercises);
+        }
+
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError(err.message);
+        setShowError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  useEffect(() => {
+    fetchExercises();
+  }, []);
+
+  // Safe filtered exercises with null checks
+  const filteredExercises = (activeCategory === 'All' 
+    ? exercises 
+    : exercises.filter(ex => ex?.category === activeCategory))
+    .filter(ex => ex); // Remove any undefined/null values
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -63,29 +89,126 @@ const ExerciseLibrary = () => {
     }));
   };
 
-  const handleSubmitExercise = (e) => {
+  const handleSubmitExercise = async (e) => {
     e.preventDefault();
-    setExercises(prev => [...prev, newExercise]);
-    setNewExercise({
-      name: '',
-      category: 'Cardio',
-      equipment: 'None',
-      difficulty: 'Beginner',
-      calories: 0,
-      instructions: ''
-    });
-    setShowAddForm(false);
+    setError(null);
+    setShowError(false);
+    
+    try {
+      // Validate form
+      if (!newExercise.name.trim()) {
+        throw new Error('Exercise name is required');
+      }
+      if (newExercise.calories <= 0) {
+        throw new Error('Calories must be greater than 0');
+      }
+
+      setIsLoading(true);
+      
+      const response = await fetch('/exercises', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...newExercise,
+          user_id: localStorage.getItem('user_id')
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to add exercise');
+      }
+
+      // Update local state with the new exercise
+      setExercises(prev => [...prev, data.exercise]);
+      setShowAddForm(false);
+      setNewExercise({
+        name: '',
+        category: 'Cardio',
+        equipment: 'None',
+        difficulty: 'Beginner',
+        calories: 0,
+        instructions: ''
+      });
+
+      fetchExercises();
+      
+    } catch (err) {
+      console.error('Submission error:', err);
+      setError(err.message);
+      setShowError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteExercise = async (exerciseId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setShowError(false);
+      
+      const response = await fetch(`/exercises/${exerciseId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete exercise');
+      }
+      
+      setExercises(prev => prev.filter(ex => ex.exercise_id !== exerciseId));
+
+      fetchExercises();
+
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError(err.message);
+      setShowError(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-800">
+      {/* Error Display */}
+      {showError && error && (
+        <div className="bg-red-100 text-red-800 p-4 mb-4 rounded-lg">
+          {error}
+          <button 
+            onClick={() => {
+              setError(null);
+              setShowError(false);
+            }}
+            className="float-right font-bold"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg">
+            <p>Loading...</p>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <section className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className='text-3xl font-bold text-white border-2 px-2 py-2 rounded-lg  bg-gray-900'>Exercise Library</h2>
+          <h2 className='text-3xl font-bold text-white border-2 px-2 py-2 rounded-lg bg-gray-900'>
+            Exercise Library
+          </h2>
           <button 
             onClick={() => setShowAddForm(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+            disabled={isLoading}
           >
             Add New Exercise
           </button>
@@ -103,6 +226,7 @@ const ExerciseLibrary = () => {
                 className={`px-4 py-2 rounded-full font-semibold ${activeCategory === category 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-white text-gray-700 hover:bg-gray-200'}`}
+                disabled={isLoading}
               >
                 {category}
               </button>
@@ -115,7 +239,7 @@ const ExerciseLibrary = () => {
           <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 p-4">
             <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h3 className="text-xl font-bold mb-4">Add New Exercise</h3>
-              <form onSubmit={handleSubmitExercise}>
+             <form onSubmit={handleSubmitExercise}>
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-2">Exercise Name</label>
                   <input
@@ -194,6 +318,18 @@ const ExerciseLibrary = () => {
                     rows="3"
                   />
                 </div>
+
+                   <div className="mb-4">
+                  <label className="block text-gray-700 mb-2">Video URL</label>
+                  <input
+                    placeholder='Optional'
+                    type="text"
+                    name="name"
+                    value={newExercise.video_url}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
                 
                 <div className="flex justify-end space-x-2">
                   <button
@@ -216,10 +352,12 @@ const ExerciseLibrary = () => {
         )}
 
         {/* Exercise Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredExercises.map((exercise, index) => (
-            <div key={index} className="bg-gradient-to-b from-gray-100 to-gray-400 rounded-lg shadow-md p-8 relative hover:shadow-lg transition-all duration-300 w-full h-96">
-              <button 
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-all">
+          {filteredExercises.length > 0 ? (
+            filteredExercises.map((exercise) => (
+              <div key={exercise.exercise_id} className="bg-gradient-to-b from-gray-100 to-gray-400 rounded-lg shadow-md p-8 relative hover:shadow-lg transition-all duration-300 w-full h-96">
+                {/* Safe property access with fallbacks */}
+                <button 
                 onClick={() => handleAddExercise(exercise.name)}
                 className="absolute top-4 right-4 text-blue-600 hover:text-blue-800"
                 title="Add to workout"
@@ -230,36 +368,42 @@ const ExerciseLibrary = () => {
                 </svg>
                
               </button>
-              
-              <h3 className="text-xl font-bold mb-2">{exercise.name}</h3>
-              <p className="text-gray-600 mb-1"><span className="font-medium">Category:</span> {exercise.category}</p>
-              <p className="text-gray-600 mb-1"><span className="font-medium">Equipment:</span> {exercise.equipment}</p>
-              <p className="text-gray-600 mb-1"><span className="font-medium">Difficulty:</span> {exercise.difficulty}</p>
-              <p className="text-gray-600 mb-4"><span className="font-medium">Calories/min:</span> {exercise.calories}</p>
-              
-              {exercise.instructions && (
-                <div className="mb-3">
-                  <p className="text-gray-600"><span className="font-medium">Instructions:</span> {exercise.instructions}</p>
-                </div>
-              )}
-              
-              <a 
-                href="#" 
-                className="text-blue-600 hover:text-blue-800 font-medium inline-block mt-2 "
-              >
-                View Instructions
-              </a>
-            
-            <div className='absolute bottom-1 right-1'>
-
-              <button className=' border-2 text-white border-black rounded-lg bg-red-700 font-semibold px-1 py-1 hover:px-2 hover:py-2 transition-all hover:bg-red-500'>
-                delete
-              </button>
+                <h3 className="text-xl font-bold mb-2">{exercise?.name || 'Unnamed Exercise'}</h3>
+                <p className="text-gray-600 mb-1">
+                  <span className="font-medium">Category:</span> {exercise?.category || 'N/A'}
+                </p>
+                <p className="text-gray-600 mb-1">
+                  <span className="font-medium">Equipment:</span> {exercise?.equipment || 'N/A'}
+                </p>
+                <p className="text-gray-600 mb-1">
+                  <span className="font-medium">Difficulty:</span> {exercise?.difficulty || 'N/A'}
+                </p>
+                <p className="text-gray-600 mb-4">
+                  <span className="font-medium">Calories/min:</span> {exercise?.calories || '0'}
+                </p>
+                
+                {exercise?.instructions && (
+                  <div className="mb-3">
+                    <p className="text-gray-600">
+                      <span className="font-medium">Instructions:</span> {exercise.instructions}
+                    </p>
+                  </div>
+                )}
+                
+                <button 
+                  onClick={() => handleDeleteExercise(exercise.exercise_id)}
+                  className="absolute bottom-1 right-1 border-2 text-white border-black rounded-lg bg-red-700 font-semibold px-1 py-1 hover:px-2 hover:py-2 transition-all hover:bg-red-500"
+                  disabled={isLoading}
+                >
+                  Delete
+                </button>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center text-white py-8">
+              {isLoading ? 'Loading exercises...' : 'No exercises found in this category'}
             </div>
-
-
-            </div>
-          ))}
+          )}
         </div>
       </section>
     </div>

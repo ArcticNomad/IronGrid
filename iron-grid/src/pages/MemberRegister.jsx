@@ -5,15 +5,15 @@ import Popup from "./Popup"; // keep this only if you have it in a separate file
 
 const MemberRegistration = () => {
   const [showPopup, setShowPopup] = useState(false);
-  let [mess,setmess]=useState('')
   const[showButton, SetShowButton]=useState(true);
+  let [mess,setmess]=useState('')
   const [userInfo, setUserInfo] = useState({ user_id: "", accountType: "" });
   const navigate = useNavigate();
 
   useEffect(() => {
     const user_id = localStorage.getItem("user_id");
     const accountType = localStorage.getItem("account_type");
-
+    
     if (!user_id ) {
       setShowPopup(true); // Show popup
       SetShowButton(false);

@@ -362,6 +362,107 @@ app.post("/TrainerRegistration", async (req, res) => {
     });
   }
 });
+app.delete('/exercises/:exerciseId', async (req, res) => {
+  const { exerciseId } = req.params;
+
+  try {
+    const [val] = await pool.query(
+      `SELECT exercise_id FROM exercise_library WHERE exercise_id=?`,
+      [exerciseId]
+    );
+
+    console.log(val);
+
+    if (val.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Exercise was not found in the database',
+      });
+    }
+
+    const [deletes] = await pool.query(
+      `DELETE FROM exercise_library WHERE exercise_id = ?`,
+      [exerciseId]
+    );
+
+    console.log(deletes);
+    return res.json({ success: true, message: 'Exercise deleted' });
+
+  } catch (err) {
+    console.error('Delete error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to delete exercise' });
+  }
+});
+
+
+app.post('/exercises',async (req,res)=>{
+  const {user_id,name,category,equipment,difficulty,calories,instructions,video_url}=req.body;
+
+  console.log(name);
+  
+  try{
+
+    console.log('starting')
+
+    const randNum = Math.floor(Math.random() * (200 - 10) + 10);
+      const exercise_id = `EX${randNum}`;
+
+    console.log(`generated Exercise id : ${exercise_id}`);
+
+
+    // get trainer id
+
+    const [trainers] =await pool.query(`SELECT trainer_id FROM trainer WHERE user_id=? `,[user_id])
+
+      if (trainers.length === 0) {
+      return res.status(402).json({ success: false, error: 'Trainer not found for user_id' });
+    }
+
+
+    const trainer_id=trainers[0].trainer_id;
+
+    console.log('trainer id ',trainer_id)
+
+    const [result] = await pool.query(
+  `INSERT INTO exercise_library 
+   (exercise_id, trainer_id, ex_name, category, equipment_needed, difficulty, calories_burned_per_min, instructions,video_url) 
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ? )`,
+  [exercise_id, trainer_id, name, category, equipment, difficulty, calories, instructions,video_url]
+);
+    console.log(result)
+
+      res.status(200).json({
+        success:true,
+        message: 'Added Succesfully !',
+      })
+
+    }catch(error){
+      console.log(error)
+      res.status(500).json({
+        success: false,
+      error: 'Exercise addition failed',
+      message: error.message
+      })
+    }
+
+})
+
+app.get('/getExercises',async(req,res)=>{
+  try{
+    const [data]= await pool.query(`SELECT * FROM exercise_library`)
+    res.status(200).json({
+      success:true,
+      data 
+    })
+  }catch(err){
+    console.log(err)
+    res.status(500).json({
+      success:false,
+      error:'Failed to Get Exercises',
+      message: error.details
+    })
+  }
+})
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Popup from "./Popup";
+import Profile from './Profile'
 
 export default function MemberDash() {
   const [showPopup, setShowPopup] = useState(false);
@@ -132,13 +133,15 @@ export default function MemberDash() {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div>
-            <h1 className="text-3xl font-extrabold mb-10 text-white">Profile</h1>
-            <div className="bg-white p-6 rounded-lg shadow">
-              {/* Profile form would go here */}
-              <p>Profile information and settings</p>
-            </div>
-          </div>
+          // <div>
+          //   <h1 className="text-3xl font-extrabold mb-10 text-white">Profile</h1>
+          //   <div className="bg-white p-6 rounded-lg shadow">
+          //     {/* Profile form would go here */}
+          //     <p>Profile information and settings</p>
+          //   </div>
+          // </div>
+
+          <Profile/>
         )}
 
         {/* Other tabs would be implemented similarly */}
