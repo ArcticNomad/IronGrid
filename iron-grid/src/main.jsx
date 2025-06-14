@@ -10,6 +10,7 @@ import MemberDash from "./pages/MemberDash.jsx";
 import "./index.css";
 import App from "./App.jsx";
 import MealLibrary from "./pages/MealLibrary.jsx";
+import ExerciseLibrary from "./pages/ExerciseLibrary.jsx";
 
 const router = createBrowserRouter([
   {
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
   {
     path: "/MealLibrary",
     element: <MealLibrary />,
+  },
+   {
+    path: "/ExerciseLibrary",
+    element: <ExerciseLibrary />,
   },
 ]);
 

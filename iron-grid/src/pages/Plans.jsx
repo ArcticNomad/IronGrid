@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import DietPlan from "./DietPlan";
+import WorkoutPlan from "./WorkoutPlan";
+
 export default function Plans() {
   // Workout Plan States
   const [showWorkoutForm, setShowWorkoutForm] = useState(false);
-  const [dietEye, setDietEye] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [workoutEye, setWorkoutEye] = useState(false);
+  const [selectedWorkoutPlan, setSelectedWorkoutPlan] = useState(null);
   const [newWorkoutPlan, setNewWorkoutPlan] = useState({
     plan_name: "",
     duration_weeks: 4,
@@ -15,10 +16,12 @@ export default function Plans() {
     notes: "",
   });
   const [workoutPlans, setWorkoutPlans] = useState([]);
+  const [isLoadingWorkout, setIsLoadingWorkout] = useState(false);
 
-  // Diet Plan States
+  // Diet Plan States (unchanged)
   const [showDietForm, setShowDietForm] = useState(false);
-
+  const [dietEye, setDietEye] = useState(false);
+  const [selectedDietPlan, setSelectedDietPlan] = useState(null);
   const [newDietPlan, setNewDietPlan] = useState({
     plan_name: "",
     daily_calories: 2000,
@@ -31,8 +34,9 @@ export default function Plans() {
   });
   const [dietPlans, setDietPlans] = useState([]);
 
-  // Add these functions to your component
+  // Fetch workout plans
   const fetchWorkoutPlans = async () => {
+    setIsLoadingWorkout(true);
     try {
       const response = await fetch("/getWorkoutPlans", {
         headers: {
@@ -47,26 +51,25 @@ export default function Plans() {
         throw new Error(data.message || "Failed to fetch workout plans");
       }
 
-      if (data.data && Array.isArray(data.data)) {
-        setWorkoutPlans(
-          data.data.map((plan) => ({
-            plan_name: plan.plan_name || "Unnamed Workout Plan",
-            duration_weeks: plan.duration_weeks || 4,
-            duration_session: plan.duration_session || 30,
-            difficulty_level: plan.difficulty_level || "beginner",
-            status: plan.status || "draft",
-            notes: plan.notes || "",
-          }))
-        );
-      } else {
-        setWorkoutPlans([]);
-      }
+      setWorkoutPlans(
+        data.data?.map((plan) => ({
+          workout_plan_id: plan.workout_plan_id,
+          plan_name: plan.plan_name || "Unnamed Workout Plan",
+          duration_weeks: plan.duration_weeks || 4,
+          duration_session: plan.duration_session || 30,
+          difficulty_level: plan.difficulty_level || "beginner",
+          status: plan.status || "draft",
+          notes: plan.notes || "",
+        })) || []
+      );
     } catch (err) {
       console.error("Error fetching workout plans:", err);
-      // Optionally show error to user
+    } finally {
+      setIsLoadingWorkout(false);
     }
   };
 
+  // Fetch diet plans (unchanged)
   const fetchDietPlans = async () => {
     try {
       const response = await fetch("/getDietPlans", {
@@ -80,8 +83,6 @@ export default function Plans() {
       if (!response.ok) {
         throw new Error(data.message || "Failed to fetch diet plans");
       }
-
-      console.log("API response", data);
 
       if (data.data && Array.isArray(data.data)) {
         setDietPlans(
@@ -97,43 +98,59 @@ export default function Plans() {
             status: plan.status || "draft",
           }))
         );
-        console.log(dietPlans);
       } else {
         setDietPlans([]);
       }
     } catch (err) {
       console.error("Error fetching diet plans:", err);
-      // Optionally show error to user
     }
   };
 
-  // Add this useEffect to fetch plans when component mounts
   useEffect(() => {
+    fetchWorkoutPlans();
     fetchDietPlans();
   }, []);
 
-  // Common Handlers
-  const handleInputChange = (e, setter) => {
+  // Workout plan handlers
+  const handleWorkoutInputChange = (e) => {
     const { name, value, type } = e.target;
-
-    setter((prev) => ({
+    setNewWorkoutPlan((prev) => ({
       ...prev,
-      [name]:
-        type === "number" ||
-        name.includes("_grams") ||
-        name === "daily_calories" ||
-        name === "duration_weeks" ||
-        name === "duration_session"
-          ? parseInt(value) || 0
-          : value,
+      [name]: type === "number" ? parseInt(value) || 0 : value,
     }));
   };
-  const handleSubmitWorkoutPlan = async (e) => {
-    e.preventDefault();
-    setWorkoutPlans((prev) => [...prev, newWorkoutPlan]);
+
+  const handleDeleteWorkoutPlan = async (planId) => {
+    if (!window.confirm("Are you sure you want to delete this workout plan?")) {
+      return;
+    }
 
     try {
+      const response = await fetch(`/deleteWorkoutPlans/${planId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete workout plan");
+      }
+
+      fetchWorkoutPlans();
+      alert("Workout plan deleted successfully");
+    } catch (err) {
+      console.error("Error deleting workout plan:", err);
+      alert(err.message || "Failed to delete workout plan");
+    }
+  };
+
+  const handleSubmitWorkoutPlan = async (e) => {
+    e.preventDefault();
+    try {
       const response = await fetch("/workoutPlan", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -146,10 +163,9 @@ export default function Plans() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new error(data.message || "Failed to Add Exercise To Workout");
+        throw new Error(data.message || "Failed to create workout plan");
       }
 
-      setWorkoutPlans((prev) => [...prev, data.exercise]);
       setShowWorkoutForm(false);
       setNewWorkoutPlan({
         plan_name: "",
@@ -159,39 +175,53 @@ export default function Plans() {
         status: "draft",
         notes: "",
       });
-    } catch (err) {}
+      fetchWorkoutPlans();
+    } catch (err) {
+      console.error("Error creating workout plan:", err);
+      alert(err.message || "Failed to create workout plan");
+    }
   };
 
-  
+  // Diet plan handlers (unchanged)
+const handleDietInputChange = (e) => {
+  const { name, value, type } = e.target;
+  setNewDietPlan((prev) => ({
+    ...prev,
+    [name]:
+      type === "number" || name.includes("_grams") || name === "daily_calories"
+        ? parseInt(value) || 0
+        : value,
+  }));
+};
   const handleDeleteDietPlan = async (planId) => {
-  if (!window.confirm("Are you sure you want to delete this diet plan? This action cannot be undone.")) {
-    return;
-  }
-
-  try {
-    const response = await fetch(`/deleteDietPlans/${planId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to delete diet plan");
+    if (!window.confirm("Are you sure you want to delete this diet plan?")) {
+      return;
     }
 
-    alert("Diet plan deleted successfully");
-    fetchDietPlans(); // Refresh the list
-  } catch (err) {
-    console.error("Error deleting diet plan:", err);
-    alert(err.message || "Failed to delete diet plan");
-  }
-};
+    try {
+      const response = await fetch(`/deleteDietPlans/${planId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete diet plan");
+      }
+
+      alert("Diet plan deleted successfully");
+      fetchDietPlans();
+    } catch (err) {
+      console.error("Error deleting diet plan:", err);
+      alert(err.message || "Failed to delete diet plan");
+    }
+  };
+
   const handleSubmitDietPlan = async (e) => {
     e.preventDefault();
-
     try {
       const response = await fetch("/mealPlan", {
         method: "POST",
@@ -211,7 +241,6 @@ export default function Plans() {
       }
 
       await fetchDietPlans();
-
       setShowDietForm(false);
       setNewDietPlan({
         plan_name: "",
@@ -244,9 +273,7 @@ export default function Plans() {
         <div className="bg-white bg-opacity-90 p-6 rounded-lg shadow-lg backdrop-blur-sm bg-gradient-to-b from-gray-100 to-gray-300">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2 border-2 border-white rounded-lg px-2 bg-gradient-to-l from-gray-200 to-gray-500">
-              <h2 className="text-2xl font-bold text-gray-800">
-                Workout Plans
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-800">Workout Plans</h2>
               <img
                 src="./work.gif"
                 alt="Workout animation"
@@ -265,19 +292,55 @@ export default function Plans() {
           </p>
 
           <div className="mt-6 space-y-4">
-            {workoutPlans.length > 0 ? (
-              workoutPlans.map((plan, index) => (
+            {isLoadingWorkout ? (
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-gray-500">Loading workout plans...</p>
+              </div>
+            ) : workoutPlans.length > 0 ? (
+              workoutPlans.map((plan) => (
                 <div
-                  key={index}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  key={plan.workout_plan_id}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 bg-white flex justify-between items-center"
                 >
-                  <h3 className="font-semibold">
-                    {plan.plan_name || "New Workout Plan"}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {plan.duration_weeks} weeks • {plan.duration_session}{" "}
-                    mins/session • {plan.difficulty_level}
-                  </p>
+                  <div>
+                    <h3 className="font-semibold">
+                      {plan.plan_name || "New Workout Plan"}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {plan.duration_weeks} weeks • {plan.duration_session} mins/session • {plan.difficulty_level}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDeleteWorkoutPlan(plan.workout_plan_id)}
+                      className="p-1 text-red-600 hover:text-white hover:bg-red-600 rounded-full transition-colors"
+                      title="Delete Plan"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                    <img
+                      onClick={() => {
+                        setSelectedWorkoutPlan(plan);
+                        setWorkoutEye(true);
+                      }}
+                      className="w-7 h-7 hover:h-8 hover:w-8 hover:bg-white rounded-4xl hover:transition-all hover:cursor-pointer"
+                      src="./eye.png"
+                      alt="preview"
+                    />
+                  </div>
                 </div>
               ))
             ) : (
@@ -288,6 +351,7 @@ export default function Plans() {
           </div>
         </div>
 
+     
         {/* Diet Plans Card */}
 <div className="bg-white bg-opacity-90 bg-gradient-to-b from-gray-100 to-gray-300 p-6 rounded-lg shadow-lg backdrop-blur-sm mt-10">
   <div className="flex justify-between items-center mb-4">
@@ -350,7 +414,7 @@ export default function Plans() {
             </button>
             <img
               onClick={() => {
-                setSelectedPlan(plan);
+                setSelectedDietPlan(plan);
                 setDietEye(true);
               }}
               className="w-7 h-7 hover:h-8 hover:w-8 hover:bg-white rounded-4xl hover:transition-all hover:cursor-pointer"
@@ -381,7 +445,7 @@ export default function Plans() {
                   type="text"
                   name="plan_name"
                   value={newWorkoutPlan.plan_name}
-                  onChange={handleInputChange}
+                  onChange={handleWorkoutInputChange}
                   className="w-full p-2 border rounded"
                   required
                   maxLength="20"
@@ -389,30 +453,12 @@ export default function Plans() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">
-                  Duration (weeks)
-                </label>
+                <label className="block text-gray-700 mb-2">Duration (weeks)</label>
                 <input
                   type="number"
                   name="duration_weeks"
                   value={newWorkoutPlan.duration_weeks}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="52"
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">
-                  Session Duration (mins)
-                </label>
-                <input
-                  placeholder="in mins"
-                  type="number"
-                  name="duration_session"
-                  value={newWorkoutPlan.duration_session}
-                  onChange={handleInputChange}
+                  onChange={handleWorkoutInputChange}
                   min="1"
                   max="52"
                   className="w-full p-2 border rounded"
@@ -421,13 +467,25 @@ export default function Plans() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">
-                  Difficulty Level
-                </label>
+                <label className="block text-gray-700 mb-2">Session Duration (mins)</label>
+                <input
+                  type="number"
+                  name="duration_session"
+                  value={newWorkoutPlan.duration_session}
+                  onChange={handleWorkoutInputChange}
+                  min="1"
+                  max="180"
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Difficulty Level</label>
                 <select
                   name="difficulty_level"
                   value={newWorkoutPlan.difficulty_level}
-                  onChange={handleInputChange}
+                  onChange={handleWorkoutInputChange}
                   className="w-full p-2 border rounded"
                   required
                 >
@@ -442,7 +500,7 @@ export default function Plans() {
                 <select
                   name="status"
                   value={newWorkoutPlan.status}
-                  onChange={handleInputChange}
+                  onChange={handleWorkoutInputChange}
                   className="w-full p-2 border rounded"
                   required
                 >
@@ -453,26 +511,12 @@ export default function Plans() {
                 </select>
               </div>
 
-              {/* <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Member ID</label>
-          <input
-            type="text"
-            name="member_id"
-            value={newWorkoutPlan.member_id}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div> */}
-
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">
-                  Notes (Optional)
-                </label>
+                <label className="block text-gray-700 mb-2">Notes (Optional)</label>
                 <textarea
                   name="notes"
                   value={newWorkoutPlan.notes}
-                  onChange={handleInputChange}
+                  onChange={handleWorkoutInputChange}
                   className="w-full p-2 border rounded"
                   rows="3"
                   maxLength="255"
@@ -499,8 +543,8 @@ export default function Plans() {
         </div>
       )}
 
-      {/* Diet Plan Form Modal */}
-      {showDietForm && (
+      {/* Diet Plan Form Modal (unchanged) */}
+     {showDietForm && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-4">Create New Diet Plan</h3>
@@ -511,7 +555,7 @@ export default function Plans() {
                   type="text"
                   name="plan_name"
                   value={newDietPlan.plan_name}
-                  onChange={(e) => handleInputChange(e, setNewDietPlan)}
+                  onChange={handleDietInputChange}
                   className="w-full p-2 border rounded"
                   required
                   maxLength="20"
@@ -649,15 +693,26 @@ export default function Plans() {
           </div>
         </div>
       )}
-{dietEye && selectedPlan && (
-  <DietPlan 
-    plan={selectedPlan} 
-    onClose={() => {
-      setDietEye(false);
-      setSelectedPlan(null);
-    }} 
-  />
-)}
+
+      {workoutEye && selectedWorkoutPlan && (
+        <WorkoutPlan 
+          plan={selectedWorkoutPlan} 
+          onClose={() => {
+            setWorkoutEye(false);
+            setSelectedWorkoutPlan(null);
+          }} 
+        />
+      )}
+
+      {dietEye && selectedDietPlan && (
+        <DietPlan 
+          plan={selectedDietPlan} 
+          onClose={() => {
+            setDietEye(false);
+            setSelectedDietPlan(null);
+          }} 
+        />
+      )}
     </div>
   );
 }
