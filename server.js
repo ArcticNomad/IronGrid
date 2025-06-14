@@ -8,6 +8,8 @@ const pool = require("./db");
 const { error } = require("console");
 
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(
   "/assets",
@@ -394,7 +396,6 @@ app.delete('/exercises/:exerciseId', async (req, res) => {
   }
 });
 
-
 app.post('/exercises',async (req,res)=>{
   const {user_id,name,category,equipment,difficulty,calories,instructions,video_url}=req.body;
 
@@ -463,6 +464,373 @@ app.get('/getExercises',async(req,res)=>{
     })
   }
 })
+
+app.post('/meals',async(req,res)=>{
+  const {user_id,m_name,type,preparationTime,isVegetarian,isVegan,isGlutenFree,servingSize,calories,protein,carbs,fat,fiber,recipeUrl}=req.body
+
+  try {
+    const randNum = Math.floor(Math.random() * (200 - 10) + 10);
+    const meal_id = `ML${randNum}`;
+
+    console.log(`generated Meal id : ${meal_id}`);
+
+    // get trainer id
+
+    const [trainers] = await pool.query(
+      `SELECT trainer_id FROM trainer WHERE user_id=? `,
+      [user_id]
+    );
+
+    if (trainers.length === 0) {
+      return res
+        .status(402)
+        .json({ success: false, error: "Trainer not found for user_id" });
+    }
+
+    const trainer_id = trainers[0].trainer_id;
+
+    console.log("trainer id ", trainer_id);
+
+    const [result_1] = await pool.query(
+      `INSERT INTO meal_library
+      (trainer_id,meal_id,meal_name,meal_type,preparation_time,is_vegetarian,is_vegan,is_gluten_free,recipe_url)
+      VALUES(?,?,?,?,?,?,?,?,?)`,
+      [
+        trainer_id,
+        meal_id,
+        m_name,
+        type,
+        preparationTime,
+        isVegetarian,
+        isVegan,
+        isGlutenFree,
+        recipeUrl,
+      ]
+    );
+
+    console.log(result_1);
+
+
+    const[result_2]=await pool.query(`INSERT INTO meal_nutrition 
+      (meal_id,serving_size,calories,protein,carbs,fat,fiber)
+      VALUES(?,?,?,?,?,?,?)`,[meal_id,servingSize,calories,protein,carbs,fat,fiber])
+
+      console.log(result_2)
+
+    res.status(200).json({
+      success: true,
+      message: "Meal Added Successfully!",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to Add Meal",
+      message: error.details,
+    });
+  }
+
+})
+
+app.get('/getMeals',async(req,res)=>{
+   try{
+    const [data]= await pool.query(` SELECT 
+        meal_library.meal_id,
+        meal_library.trainer_id,
+        meal_library.meal_name,
+        meal_library.meal_type,
+        meal_library.preparation_time,
+        meal_library.is_vegetarian,
+        meal_library.is_vegan,
+        meal_library.is_gluten_free,
+        meal_library.recipe_url,
+        meal_nutrition.serving_size,
+        meal_nutrition.calories,
+        meal_nutrition.protein,
+        meal_nutrition.carbs,
+        meal_nutrition.fat,
+        meal_nutrition.fiber
+      FROM meal_library
+      JOIN meal_nutrition ON meal_library.meal_id = meal_nutrition.meal_id `)
+    res.status(200).json({
+      success:true,
+       data: data || []   
+    })
+  }catch(err){
+    console.log(err)
+    res.status(500).json({
+      success:false,
+      error:'Failed to Get Meals',
+      message: error.details
+    })
+  }
+})
+
+app.post('/workoutPlan',async(req,res)=>{
+  const {plan_name,duration_weeks,duration_session,difficulty_level,status,notes}=req.body
+  try{
+
+    console.log('starting')
+
+    const randNum = Math.floor(Math.random() * (200 - 10) + 10);
+      const workoutPlan_id = `WP${randNum}`;
+
+    console.log(`generated workoutPlan id : ${workoutPlan_id}`);
+
+    const [result]=await pool.query(`INSERT INTO workout_plan`)
+
+
+  }catch(error){
+
+  }
+})
+
+app.delete('/meals/:mealID', async (req, res) => {
+  const { mealID } = req.params;
+  
+  // Safely get context with default value
+  const context = req.body?.context || 'DIRECT_DELETE'; 
+  
+  try {
+    // Verify meal exists
+    const [mealExists] = await pool.query(
+      `SELECT meal_id FROM meal_library WHERE meal_id = ?`,
+      [mealID]
+    );
+
+    if (mealExists.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Meal not found in database',
+      });
+    }
+
+    // Start transaction
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      // Remove from plan_meals first (to avoid FK constraints)
+      await connection.query(
+        `DELETE FROM plan_meals WHERE meal_id = ?`,
+        [mealID]
+      );
+
+      // Only delete from other tables if not PLAN_DELETE
+      if (context !== 'PLAN_DELETE') {
+        await connection.query(
+          `DELETE FROM meal_nutrition WHERE meal_id = ?`,
+          [mealID]
+        );
+
+        const [result] = await connection.query(
+          `DELETE FROM meal_library WHERE meal_id = ?`,
+          [mealID]
+        );
+
+        if (result.affectedRows === 0) {
+          throw new Error('Meal not found');
+        }
+      }
+
+      await connection.commit();
+      
+      return res.json({ 
+        success: true, 
+        message: context === 'PLAN_DELETE' 
+          ? 'Meal removed from plans' 
+          : 'Meal completely deleted' 
+      });
+
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+
+  } catch (err) {
+    console.error('Delete error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete meal',
+      details: err.message 
+    });
+  }
+});
+
+app.get('/getPlanMeals', async (req, res) => {
+  const { plan_id } = req.query;
+  
+  try {
+    const [meals] = await pool.query(`
+      SELECT 
+        m.meal_id,
+        m.meal_name,
+        m.meal_type,
+        m.preparation_time,
+        m.recipe_url,
+        m.is_vegetarian,
+        m.is_vegan,
+        m.is_gluten_free,
+        mn.serving_size,
+        mn.calories,
+        mn.protein,
+        mn.carbs,
+        mn.fat,
+        mn.fiber,
+        pm.day_num
+      FROM plan_meals pm
+      JOIN meal_library m ON pm.meal_id = m.meal_id
+      JOIN meal_nutrition mn ON m.meal_id = mn.meal_id
+      WHERE pm.diet_plan_id = ?
+      ORDER BY pm.day_num, m.meal_type
+    `, [plan_id]);
+
+    res.json({
+      success: true,
+      data: meals.map(meal => ({
+        meal_id: meal.meal_id,
+        m_name: meal.meal_name,
+        type: meal.meal_type,
+        preparationTime: meal.preparation_time,
+        recipeUrl: meal.recipe_url,
+        isVegetarian: Boolean(meal.is_vegetarian),
+        isVegan: Boolean(meal.is_vegan),
+        isGlutenFree: Boolean(meal.is_gluten_free),
+        servingSize: meal.serving_size,
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.carbs,
+        fat: meal.fat,
+        fiber: meal.fiber,
+        day_num: meal.day_num
+      }))
+    });
+  } catch (err) {
+    console.error('Error fetching plan meals:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Server error',
+      details: err.message 
+    });
+  }
+});
+app.post('/mealPlan',async(req,res)=>{
+  const{user_id,plan_name,daily_calories,protein_grams,carbs_grams,fat_grams,dietary_restrictions,cuisine_preferences,status}=req.body
+
+  try{
+    const randNum = Math.floor(Math.random() * (200 - 10) + 10);
+      const diet_plan_id = `DP${randNum}`;
+
+
+    console.log(`generated diet plan id : ${diet_plan_id}`);
+
+    
+    const [trainers] =await pool.query(`SELECT trainer_id FROM trainer WHERE user_id=? `,[user_id])
+
+      if (trainers.length === 0) {
+      return res.status(402).json({ success: false, error: 'Trainer not found for user_id' });
+    }
+
+
+    const trainer_id=trainers[0].trainer_id;
+
+    console.log('trainer id ',trainer_id)
+
+
+    const [result]=await pool.query(`INSERT INTO diet_plan 
+      (trainer_id,diet_plan_id,plan_name,daily_calories,protein_grams,carbs_grams,fat_grams,dietary_restrictions,cuisine_preferences,status)
+      VALUES(?,?,?,?,?,?,?,?,?,?)`,
+      [trainer_id,diet_plan_id,plan_name,daily_calories,protein_grams,carbs_grams,fat_grams,dietary_restrictions,cuisine_preferences,status]
+    )
+    console.log(result)
+    
+    res.status(200).json({
+      success:true,
+      message:'Data Successfully Added !'
+    })
+  }catch(err){
+     console.log("Error inserting meal plan:", err);
+    res.status(500).json({
+      success:false,
+      error:"Data Submission Failed "
+    })
+  }
+
+}
+
+)
+app.post('/addMealToPlan', async (req, res) => {
+  const { meal_id, plan_id, user_id ,day_num} = req.body;
+
+  try {
+    // Verify the user owns the plan
+    const [plans] = await pool.query(
+      `SELECT trainer_id FROM diet_plan WHERE diet_plan_id = ?`,
+      [plan_id]
+    );
+
+    if (plans.length === 0) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+
+    const trainer_id = plans[0].trainer_id;
+
+    // Verify the trainer matches the user
+    const [trainers] = await pool.query(
+      `SELECT user_id FROM trainer WHERE trainer_id = ?`,
+      [trainer_id]
+    );
+
+    if (trainers.length === 0 || trainers[0].user_id !== user_id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    // Add meal to plan
+   const [result] = await pool.query(
+      `INSERT INTO plan_meals (diet_plan_id, meal_id, day_num) VALUES (?, ?, ?)`,
+      [plan_id, meal_id, day_num]
+    );
+    res.status(200).json({
+      success: true,
+      message: 'Meal added to plan successfully'
+    });
+  } catch (err) {
+    console.log('Error adding meal to plan:', err);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to add meal to plan',
+      details: err.message
+    });
+  }
+});
+
+app.get('/getDietPlans',async(req,res)=>{
+
+  try{
+
+    const [data]=await pool.query(`SELECT * FROM diet_plan`);
+
+    console.log(data);
+
+    return res.status(200).json({
+      success: true,
+      message:'Data Fetched Succesfully',
+      data:data
+    })
+
+
+  }catch(err){
+    console.log(err)
+    res.status(500).json({
+      success:false,
+      err:'Failed To Get the Data',
+      message: err.details
+    })
+  }
+
+})  
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;

@@ -117,7 +117,7 @@ export default function Hero() {
             <h1 className="text-5xl font-bold tracking-tight text-white sm:text-7xl">
               Motivation gets you started. <span className='text-red-400'> Habit </span> keeps you going
             </h1>
-            <p className="mt-8 text-lg font-semibold text-white sm:text-xl">
+            <p className="mt-8 text-lg font-semibold text-white sm:text-xl ">
               We'll be here every step of the way
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">

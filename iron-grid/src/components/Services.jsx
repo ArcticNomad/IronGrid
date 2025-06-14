@@ -26,7 +26,7 @@ export default function ServiceCard({ imageSrc, title, description }) {
         {/* Description in middle (centered vertically) */}
         <div className="flex-grow flex items-center justify-center">
           <p className="text-sm text-white text-center font-semibold opacity-90 max-w-[90%]">
-            {description}
+            
           </p>
         </div>
 
