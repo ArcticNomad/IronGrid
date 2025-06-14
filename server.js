@@ -761,6 +761,68 @@ app.post('/mealPlan',async(req,res)=>{
 }
 
 )
+
+app.delete('/deleteDietPlans/:planId', async (req, res) => {
+  const { planId } = req.params;
+  
+  // Get a connection from the pool
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+        const [planExists] = await connection.query(
+      `SELECT diet_plan_id FROM diet_plan WHERE diet_plan_id = ?`,
+      [planId]
+    );
+     if (planExists.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        error: 'Diet plan not found'
+      });
+    }
+
+    // 1. First delete all associated meals from plan_meals
+    await connection.query(
+      `DELETE FROM plan_meals WHERE diet_plan_id = ?`,
+      [planId]
+    );
+
+    // 2. Then delete the diet plan itself
+    const [result] = await connection.query(
+      `DELETE FROM diet_plan WHERE diet_plan_id = ?`,
+      [planId]
+    );
+
+    // Check if any rows were affected
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        error: 'Diet plan not found'
+      });
+    }
+
+    await connection.commit();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Diet plan deleted successfully'
+    });
+
+  } catch (err) {
+    await connection.rollback();
+    console.log('Error deleting diet plan:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete diet plan',
+      details: err.message
+    });
+  } finally {
+    connection.release();
+  }
+});
+
 app.post('/addMealToPlan', async (req, res) => {
   const { meal_id, plan_id, user_id ,day_num} = req.body;
 

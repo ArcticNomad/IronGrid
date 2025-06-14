@@ -29,6 +29,9 @@ export default function DietPlan({ plan, onClose }) {
     }
   }, [plan?.diet_plan_id]);
 
+
+  
+
   const handleDeleteMeal = async (mealId) => {
     if (
       !window.confirm(
@@ -260,13 +263,9 @@ export default function DietPlan({ plan, onClose }) {
     <p className="text-gray-500 mb-4">No meals added to this plan yet</p>
     <button
       onClick={() => {
-        // Close the current modal
         onClose();
-        // Add your navigation logic to the meal library here
-        // For example, if using React Router:
+        
         navigate('/MealLibrary', { state: { planId: plan.diet_plan_id } });
-        // Or if you have a state management solution:
-        // setShowMealLibrary(true);
       }}
       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
     >
