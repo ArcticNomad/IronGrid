@@ -571,7 +571,7 @@ const handleDietInputChange = (e) => {
                     type="number"
                     name="daily_calories"
                     value={newDietPlan.daily_calories}
-                    onChange={(e) => handleInputChange(e, setNewDietPlan)}
+                    onChange={handleDietInputChange}
                     min="0"
                     className="w-full p-2 border rounded"
                     required
@@ -585,7 +585,7 @@ const handleDietInputChange = (e) => {
                     type="number"
                     name="protein_grams"
                     value={newDietPlan.protein_grams}
-                    onChange={(e) => handleInputChange(e, setNewDietPlan)}
+                    onChange={handleDietInputChange}
                     min="0"
                     className="w-full p-2 border rounded"
                     required
@@ -597,7 +597,7 @@ const handleDietInputChange = (e) => {
                     type="number"
                     name="carbs_grams"
                     value={newDietPlan.carbs_grams}
-                    onChange={(e) => handleInputChange(e, setNewDietPlan)}
+                    onChange={handleDietInputChange}
                     min="0"
                     className="w-full p-2 border rounded"
                     required
@@ -609,7 +609,7 @@ const handleDietInputChange = (e) => {
                     type="number"
                     name="fat_grams"
                     value={newDietPlan.fat_grams}
-                    onChange={(e) => handleInputChange(e, setNewDietPlan)}
+                    onChange={handleDietInputChange}
                     min="0"
                     className="w-full p-2 border rounded"
                     required
@@ -625,7 +625,7 @@ const handleDietInputChange = (e) => {
                   type="text"
                   name="dietary_restrictions"
                   value={newDietPlan.dietary_restrictions}
-                  onChange={(e) => handleInputChange(e, setNewDietPlan)}
+                  onChange={handleDietInputChange}
                   className="w-full p-2 border rounded"
                   placeholder="e.g., gluten-free, dairy-free"
                 />
@@ -639,7 +639,7 @@ const handleDietInputChange = (e) => {
                   type="text"
                   name="cuisine_preferences"
                   value={newDietPlan.cuisine_preferences}
-                  onChange={(e) => handleInputChange(e, setNewDietPlan)}
+                  onChange={handleDietInputChange}
                   className="w-full p-2 border rounded"
                   placeholder="e.g., Mediterranean, Asian"
                 />
