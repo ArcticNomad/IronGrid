@@ -74,9 +74,9 @@ function App() {
 
 const pricingData = [
   {
-    planName: 'Flexfit',
+    planName: 'Basic',
     planType: 'Regular',
-    price: 0,
+    price: 'Free',
     currency: 'Rs',
     period: 'MONTH',
     features: [
@@ -115,30 +115,12 @@ const pricingData = [
       'Towel service'
     ],
     unavailableFeatures: [
-      'Towel service'
+  
     ],
     bestOffer: true,
     buttonText: 'Choose Plan',
   },
-  {
-    planName: 'Elitemax',
-    planType: 'Pro',
-    price: 95,
-    currency: '$',
-    period: 'MONTH',
-    features: [
-      '24/7 access',
-      'Priority booking',
-      '10 training sessions',
-      'Exclusive workshops',
-      'Premium app',
-      'Locker access',
-      'Towel service'
-    ],
-    unavailableFeatures: [],
-    bestOffer: false,
-    buttonText: 'Choose Plan',
-  },
+ 
 ];
 
   return (

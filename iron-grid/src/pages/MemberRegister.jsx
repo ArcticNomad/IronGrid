@@ -42,6 +42,8 @@ const MemberRegistration = () => {
     primary_goal: "maintenance",
     medical_conditions: "",
     dietary_preferences: "",
+    member_plan:''
+    
   });
 
   const fitnessLevels = [
@@ -50,6 +52,11 @@ const MemberRegistration = () => {
     { 3: "Intermediate" },
     { 4: "Advanced" },
     { 5: "Athlete" },
+  ];
+
+    const plans = [
+    { value: "Basic", label: "Basic Plan" },
+    { value: "Powerpro", label: "PowerPro Plan" }
   ];
 
   const goals = [
@@ -111,6 +118,7 @@ const MemberRegistration = () => {
           current_weight: parseFloat(formData.current_weight),
           target_weight: parseFloat(formData.target_weight),
           fitness_level: parseInt(formData.fitness_level),
+          member_plan: formData.member_plan
         }),
       });
 
@@ -234,6 +242,26 @@ const MemberRegistration = () => {
             })}
           </select>
         </div>
+
+          {/* Updated Plan Selection */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Choose Plan
+        </label>
+        <select
+          name="member_plan" // Corrected name attribute
+          value={formData.member_plan}
+          onChange={handleChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          required
+        >
+          {plans.map((plan) => (
+            <option key={plan.value} value={plan.value}>
+              {plan.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
         {/* Primary Goal */}
         <div>

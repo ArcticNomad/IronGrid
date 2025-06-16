@@ -255,6 +255,7 @@ app.post("/MemberRegistration", async (req, res) => {
     primary_goal,
     medical_conditions,
     dietary_preferences,
+    member_plan
   } = req.body;
 
   try {
@@ -274,9 +275,10 @@ app.post("/MemberRegistration", async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO member 
-    (member_id,user_id,height,current_weight,target_weight,fitness_level,primary_goal,medical_conditions,dietary_preferences)
-    VALUES (?,?,?,?,?,?,?,?,?)`,
+    (member_plan,member_id,user_id,height,current_weight,target_weight,fitness_level,primary_goal,medical_conditions,dietary_preferences)
+    VALUES (?,?,?,?,?,?,?,?,?,?)`,
       [
+        member_plan,
         member_id,
         userId,
         height,
@@ -297,6 +299,7 @@ app.post("/MemberRegistration", async (req, res) => {
       },
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({
       success: false,
       error: "Registration failed",
@@ -601,7 +604,7 @@ app.get('/getMeals',async(req,res)=>{
 app.delete('/meals/:mealID', async (req, res) => {
   const { mealID } = req.params;
   
-  // Safely get context with default value
+  // Safely get context with default value  
   const context = req.body?.context || 'DIRECT_DELETE'; 
   
   try {
@@ -774,20 +777,21 @@ app.post('/mealPlan',async(req,res)=>{
 }
 
 )
-
 app.delete('/deleteDietPlans/:planId', async (req, res) => {
   const { planId } = req.params;
-  
-  // Get a connection from the pool
+  const { forceDelete } = req.query; // Added forceDelete flag
   const connection = await pool.getConnection();
-  
+
   try {
     await connection.beginTransaction();
-        const [planExists] = await connection.query(
+
+    // Check if plan exists
+    const [planExists] = await connection.query(
       `SELECT diet_plan_id FROM diet_plan WHERE diet_plan_id = ?`,
       [planId]
     );
-     if (planExists.length === 0) {
+
+    if (planExists.length === 0) {
       await connection.rollback();
       return res.status(404).json({
         success: false,
@@ -795,37 +799,58 @@ app.delete('/deleteDietPlans/:planId', async (req, res) => {
       });
     }
 
-    // 1. First delete all associated meals from plan_meals
+    // Check if plan is assigned to any members
+    const [assignedMembers] = await connection.query(
+      `SELECT COUNT(*) as memberCount FROM member_diet_plans WHERE diet_plan_id = ?`,
+      [planId]
+    );
+
+    const hasActiveMembers = assignedMembers[0].memberCount > 0;
+
+    if (hasActiveMembers && !forceDelete) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        error: 'Diet plan has active members',
+        memberCount: assignedMembers[0].memberCount,
+        requiresConfirmation: true
+      });
+    }
+
+    // If we get here, either no members or forceDelete=true
+
+    // First delete member assignments (if force deleting)
+    if (hasActiveMembers) {
+      await connection.query(
+        `DELETE FROM member_diet_plans WHERE diet_plan_id = ?`,
+        [planId]
+      );
+    }
+
+    // Delete all associated meals from plan_meals
     await connection.query(
       `DELETE FROM plan_meals WHERE diet_plan_id = ?`,
       [planId]
     );
 
-    // 2. Then delete the diet plan itself
+    // Delete the diet plan itself
     const [result] = await connection.query(
       `DELETE FROM diet_plan WHERE diet_plan_id = ?`,
       [planId]
     );
 
-    // Check if any rows were affected
-    if (result.affectedRows === 0) {
-      await connection.rollback();
-      return res.status(404).json({
-        success: false,
-        error: 'Diet plan not found'
-      });
-    }
-
     await connection.commit();
     
     res.status(200).json({
       success: true,
-      message: 'Diet plan deleted successfully'
+      message: hasActiveMembers 
+        ? 'Diet plan and all member assignments deleted successfully' 
+        : 'Diet plan deleted successfully'
     });
 
   } catch (err) {
     await connection.rollback();
-    console.log('Error deleting diet plan:', err);
+    console.error("Error deleting diet plan:", err);
     res.status(500).json({
       success: false,
       error: 'Failed to delete diet plan',
@@ -998,12 +1023,13 @@ app.get('/getWorkoutPlans', async (req, res) => {
 // Delete a workout plan
 app.delete('/deleteWorkoutPlans/:planId', async (req, res) => {
   const { planId } = req.params;
+  const { forceDelete } = req.query; // Added forceDelete flag
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    // First check if plan exists
+    // Check if plan exists
     const [planExists] = await connection.query(
       `SELECT workout_plan_id FROM workout_plan WHERE workout_plan_id = ?`,
       [planId]
@@ -1017,31 +1043,53 @@ app.delete('/deleteWorkoutPlans/:planId', async (req, res) => {
       });
     }
 
-    // First delete all associated exercises from plan_exercises
+    // Check if plan is assigned to any members
+    const [assignedMembers] = await connection.query(
+      `SELECT COUNT(*) as memberCount FROM member_workout_plans WHERE workout_plan_id = ?`,
+      [planId]
+    );
+
+    const hasActiveMembers = assignedMembers[0].memberCount > 0;
+
+    if (hasActiveMembers && !forceDelete) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        error: 'Workout plan has active members',
+        memberCount: assignedMembers[0].memberCount,
+        requiresConfirmation: true
+      });
+    }
+
+    // If we get here, either no members or forceDelete=true
+
+    // First delete member assignments (if force deleting)
+    if (hasActiveMembers) {
+      await connection.query(
+        `DELETE FROM member_workout_plans WHERE workout_plan_id = ?`,
+        [planId]
+      );
+    }
+
+    // Delete all associated exercises
     await connection.query(
       `DELETE FROM plan_exercises WHERE workout_plan_id = ?`,
       [planId]
     );
 
-    // Then delete the workout plan itself
+    // Delete the workout plan itself
     const [result] = await connection.query(
       `DELETE FROM workout_plan WHERE workout_plan_id = ?`,
       [planId]
     );
 
-    if (result.affectedRows === 0) {
-      await connection.rollback();
-      return res.status(404).json({
-        success: false,
-        error: 'Workout plan not found'
-      });
-    }
-
     await connection.commit();
     
     res.status(200).json({
       success: true,
-      message: 'Workout plan deleted successfully'
+      message: hasActiveMembers 
+        ? 'Workout plan and all member assignments deleted successfully' 
+        : 'Workout plan deleted successfully'
     });
 
   } catch (err) {
@@ -1250,4 +1298,500 @@ app.post("/login", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+// Get member data (updated)
+app.get('/api/member/:userId/data', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log('Fetching data for user:', userId);
+    
+    const [results] = await pool.query('CALL GetMemberDashboardData(?)', [userId]);
+    console.log('Raw DB results:', results);
+
+    // The stored procedure now returns exactly one row
+    if (!results || results.length === 0 || results[0].length === 0) {
+      console.log('No member found for user:', userId);
+      return res.status(404).json({ error: 'Member not found' });
+    }
+
+    const memberData = results[0][0]; // Get the first (and only) row
+    console.log('Member data from DB:', memberData);
+    
+    const response = {
+      success: true,
+      name: memberData.name || '',
+      currentWeight: parseFloat(memberData.current_weight) || 0,
+      targetWeight: parseFloat(memberData.target_weight) || 0,
+      fitnessLevel: parseInt(memberData.fitness_level) || 0,
+      activeWorkoutPlan: memberData.active_workout_plan || 'Not assigned',
+      activeDietPlan: memberData.active_diet_plan || 'Not assigned',
+      memberId: memberData.member_id || ''
+    };
+
+    console.log('Final API response:', response);
+    res.json(response);
+
+  } catch (err) {
+    console.error('Database error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+// Get member's active workout plan details
+app.get('/api/member/:memberId/workout-plan', async (req, res) => {
+  try {
+    const { memberId } = req.params;
+
+    // Get the active workout plan
+    const [plans] = await pool.query(`
+      SELECT 
+        workout_plan.*,
+        CONCAT(user.first_name, ' ', user.last_name) AS trainer_name
+      FROM workout_plan
+      JOIN member_workout_plans ON workout_plan.workout_plan_id = member_workout_plans.workout_plan_id
+      JOIN trainer ON workout_plan.trainer_id = trainer.trainer_id
+      JOIN user ON trainer.user_id = user.user_id
+      WHERE member_workout_plans.member_id = ? AND workout_plan.status = 'active'
+      ORDER BY member_workout_plans.assigned_date DESC LIMIT 1
+    `, [memberId]);
+
+    if (plans.length === 0) {
+      return res.json({ 
+        success: true,
+        message: 'No active workout plan found' 
+      });
+    }
+
+    const workoutPlan = plans[0];
+
+    // Get exercises for this plan
+    const [exercises] = await pool.query(`
+      SELECT 
+        plan_exercises.*, 
+        exercise_library.ex_name, 
+        exercise_library.category,
+        exercise_library.equipment_needed,
+        exercise_library.difficulty,
+        exercise_library.video_url,
+        exercise_library.instructions
+      FROM plan_exercises
+      JOIN exercise_library ON plan_exercises.exercise_id = exercise_library.exercise_id
+      WHERE plan_exercises.workout_plan_id = ?
+      ORDER BY plan_exercises.day_num, plan_exercises.plan_exercise_id
+    `, [workoutPlan.workout_plan_id]);
+
+    res.json({
+      success: true,
+      workoutPlan: {
+        ...workoutPlan,
+        exercises
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching workout plan:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch workout plan' });
+  }
+});
+
+// Get exercises for a specific workout plan (for preview)
+app.get('/api/workout-plans/:planId/exercises', async (req, res) => {
+  try {
+    const { planId } = req.params;
+    
+    const [exercises] = await pool.query(`
+      SELECT 
+        plan_exercises.*, 
+        exercise_library.ex_name, 
+        exercise_library.category,
+        exercise_library.equipment_needed,
+        exercise_library.difficulty,
+        exercise_library.video_url,
+        exercise_library.instructions
+      FROM plan_exercises
+      JOIN exercise_library ON plan_exercises.exercise_id = exercise_library.exercise_id
+      WHERE plan_exercises.workout_plan_id = ?
+      ORDER BY plan_exercises.day_num, plan_exercises.plan_exercise_id
+      LIMIT 5
+    `, [planId]);
+
+    res.json({
+      success: true,
+      exercises
+    });
+  } catch (err) {
+    console.error('Error fetching plan exercises:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch exercises' });
+  }
+});
+
+// Get available workout plans for members (with preview exercises)
+app.get('/api/workout-plans/available', async (req, res) => {
+  try {
+    const [plans] = await pool.query(`
+      SELECT 
+        workout_plan.workout_plan_id,
+        workout_plan.plan_name,
+        workout_plan.duration_weeks,
+        workout_plan.duration_session,
+        workout_plan.difficulty_level,
+        workout_plan.notes,
+        CONCAT(user.first_name, ' ', user.last_name) AS trainer_name
+      FROM workout_plan
+      JOIN trainer ON workout_plan.trainer_id = trainer.trainer_id
+      JOIN user ON trainer.user_id = user.user_id
+      WHERE workout_plan.status = 'active'
+    `);
+    console.log("Workout plans from DB:", plans);
+
+    // Get preview exercises for each plan
+    const plansWithExercises = await Promise.all(plans.map(async plan => {
+      const [exercises] = await pool.query(`
+        SELECT 
+          plan_exercises.exercise_id,
+          exercise_library.ex_name,
+          plan_exercises.sets,
+          plan_exercises.reps
+        FROM plan_exercises
+        JOIN exercise_library ON plan_exercises.exercise_id = exercise_library.exercise_id
+        WHERE plan_exercises.workout_plan_id = ?
+        LIMIT 3
+      `, [plan.workout_plan_id]);
+      
+      return {
+        ...plan,
+        previewExercises: exercises
+      };
+    }));
+
+    res.json({
+      success: true,
+      plans: plansWithExercises
+    });
+  } catch (err) {
+    console.log(err)
+    console.error('Error fetching workout plans:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch workout plans' });
+  }
+});
+
+// Assign workout plan to member
+app.post('/api/member/assign-workout-plan', async (req, res) => {
+  const { member_id, workout_plan_id } = req.body;
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Check if member already has this plan assigned
+    const [existing] = await connection.query(`
+      SELECT * FROM member_workout_plans 
+      WHERE member_id = ? AND workout_plan_id = ?
+    `, [member_id, workout_plan_id]);
+
+    if (existing.length > 0) {
+      await connection.rollback();
+      return res.status(400).json({ 
+        success: false,
+        error: 'Plan already assigned to member' 
+      });
+    }
+
+    // Assign the new plan
+    await connection.query(`
+      INSERT INTO member_workout_plans (member_id, workout_plan_id)
+      VALUES (?, ?)
+    `, [member_id, workout_plan_id]);
+
+    // Get plan name for response
+    const [plan] = await connection.query(`
+      SELECT plan_name FROM workout_plan 
+      WHERE workout_plan_id = ?
+    `, [workout_plan_id]);
+
+    await connection.commit();
+
+    res.json({ 
+      success: true,
+      message: 'Workout plan assigned successfully',
+      plan_name: plan[0].plan_name
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Error assigning workout plan:', err);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to assign workout plan' 
+    });
+  } finally {
+    connection.release();
+  }
+});
+
+// Get member ID from user ID
+app.get('/api/member/user/:user_id/id', async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    
+    const [member] = await pool.query(`
+      SELECT member_id FROM member 
+      WHERE user_id = ?
+    `, [user_id]);
+
+    if (member.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Member not found' 
+      });
+    }
+
+    res.json({
+      success: true,
+      member_id: member[0].member_id
+    });
+  } catch (err) {
+    console.error('Error fetching member ID:', err);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch member ID' 
+    });
+  }
+});
+
+// Get member's active diet plan details
+app.get('/api/member/:memberId/diet-plan', async (req, res) => {
+  try {
+    const { memberId } = req.params;
+
+    // Get the active diet plan
+    const [plans] = await pool.query(`
+      SELECT 
+        diet_plan.*,
+        CONCAT(user.first_name, ' ', user.last_name) AS trainer_name
+      FROM diet_plan
+      JOIN member_diet_plans ON diet_plan.diet_plan_id = member_diet_plans.diet_plan_id
+      JOIN trainer ON diet_plan.trainer_id = trainer.trainer_id
+      JOIN user ON trainer.user_id = user.user_id
+      WHERE member_diet_plans.member_id = ? AND diet_plan.status = 'active'
+      ORDER BY member_diet_plans.assigned_date DESC LIMIT 1
+    `, [memberId]);
+
+    if (plans.length === 0) {
+      return res.json({ 
+        success: true,
+        message: 'No active diet plan found' 
+      });
+    }
+
+    const dietPlan = plans[0];
+
+    // Get meals for this plan
+    const [meals] = await pool.query(`
+      SELECT 
+        plan_meals.day_num,
+        meal_library.meal_id,
+        meal_library.meal_name,
+        meal_library.meal_type,
+        meal_library.preparation_time,
+        meal_library.recipe_url,
+        meal_nutrition.serving_size,
+        meal_nutrition.calories,
+        meal_nutrition.protein,
+        meal_nutrition.carbs,
+        meal_nutrition.fat,
+        meal_nutrition.fiber
+      FROM plan_meals
+      JOIN meal_library ON plan_meals.meal_id = meal_library.meal_id
+      JOIN meal_nutrition ON meal_library.meal_id = meal_nutrition.meal_id
+      WHERE plan_meals.diet_plan_id = ?
+      ORDER BY plan_meals.day_num, 
+        CASE meal_library.meal_type
+          WHEN 'Breakfast' THEN 1
+          WHEN 'Lunch' THEN 2
+          WHEN 'Dinner' THEN 3
+          WHEN 'Snack' THEN 4
+          ELSE 5
+        END
+    `, [dietPlan.diet_plan_id]);
+
+    res.json({
+      success: true,
+      dietPlan: {
+        ...dietPlan,
+        meals
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching diet plan:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch diet plan' });
+  }
+});
+
+// Get available diet plans for members (with preview meals)
+app.get('/api/diet-plans/available', async (req, res) => {
+  try {
+    const [plans] = await pool.query(`
+      SELECT 
+        diet_plan.diet_plan_id,
+        diet_plan.plan_name,
+        diet_plan.daily_calories,
+        diet_plan.cuisine_preferences,
+        CONCAT(user.first_name, ' ', user.last_name) AS trainer_name
+      FROM diet_plan
+      JOIN trainer ON diet_plan.trainer_id = trainer.trainer_id
+      JOIN user ON trainer.user_id = user.user_id
+      WHERE diet_plan.status = 'active'
+    `);
+
+    // Get preview meals for each plan
+    const plansWithMeals = await Promise.all(plans.map(async plan => {
+      const [meals] = await pool.query(`
+        SELECT 
+          meal_library.meal_name,
+          meal_library.meal_type
+        FROM plan_meals
+        JOIN meal_library ON plan_meals.meal_id = meal_library.meal_id
+        WHERE plan_meals.diet_plan_id = ?
+        LIMIT 3
+      `, [plan.diet_plan_id]);
+      
+      return {
+        ...plan,
+        previewMeals: meals
+      };
+    }));
+
+    res.json({
+      success: true,
+      plans: plansWithMeals
+    });
+  } catch (err) {
+    console.error('Error fetching diet plans:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch diet plans' });
+  }
+});
+
+// Assign diet plan to member
+app.post('/api/member/assign-diet-plan', async (req, res) => {
+  const { member_id, diet_plan_id } = req.body;
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Check if member already has this plan assigned
+    const [existing] = await connection.query(`
+      SELECT * FROM member_diet_plans 
+      WHERE member_id = ? AND diet_plan_id = ?
+    `, [member_id, diet_plan_id]);
+
+    if (existing.length > 0) {
+      await connection.rollback();
+      return res.status(400).json({ 
+        success: false,
+        error: 'Plan already assigned to member' 
+      });
+    }
+
+    // Assign the new plan
+    await connection.query(`
+      INSERT INTO member_diet_plans (member_id, diet_plan_id)
+      VALUES (?, ?)
+    `, [member_id, diet_plan_id]);
+
+    // Get plan name for response
+    const [plan] = await connection.query(`
+      SELECT plan_name FROM diet_plan 
+      WHERE diet_plan_id = ?
+    `, [diet_plan_id]);
+
+    await connection.commit();
+
+    res.json({ 
+      success: true,
+      message: 'Diet plan assigned successfully',
+      plan_name: plan[0].plan_name
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Error assigning diet plan:', err);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to assign diet plan' 
+    });
+  } finally {
+    connection.release();
+  }
+});
+// Delete workout plan assignment
+app.delete('/api/member/delete-workout-plan', async (req, res) => {
+  const { member_id } = req.body;
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+    
+    // Delete from member_workout_plans
+    await connection.query(
+      'DELETE FROM member_workout_plans WHERE member_id = ?',
+      [member_id]
+    );
+    
+    // // Optionally update members table if you track active plans there
+    // await connection.query(
+    //   'UPDATE member SET active_workout_plan_id = NULL WHERE member_id = ?',
+    //   [member_id]
+    // );
+    
+    await connection.commit();
+    res.json({ 
+      success: true,
+      message: 'Workout plan assignment deleted successfully'
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Error deleting workout plan:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete workout plan' 
+    });
+  } finally {
+    connection.release();
+  }
+});
+
+// Delete diet plan assignment
+app.delete('/api/member/delete-diet-plan', async (req, res) => {
+  const { member_id } = req.body;
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+    
+    // Delete from member_diet_plans
+    await connection.query(
+      'DELETE FROM member_diet_plans WHERE member_id = ?',
+      [member_id]
+    );
+    
+    // Optionally update members table if you track active plans there
+    // await connection.query(
+    //   'UPDATE member SET active_diet_plan_id = NULL WHERE member_id = ?',
+    //   [member_id]
+    // );
+    
+    await connection.commit();
+    res.json({ 
+      success: true,
+      message: 'Diet plan assignment deleted successfully'
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Error deleting diet plan:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete diet plan' 
+    });
+  } finally {
+    connection.release();
+  }
 });

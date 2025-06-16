@@ -119,33 +119,68 @@ export default function Plans() {
       [name]: type === "number" ? parseInt(value) || 0 : value,
     }));
   };
-
-  const handleDeleteWorkoutPlan = async (planId) => {
+const handleDeleteWorkoutPlan = async (planId) => {
     if (!window.confirm("Are you sure you want to delete this workout plan?")) {
       return;
     }
-
-    try {
-      const response = await fetch(`/deleteWorkoutPlans/${planId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete workout plan");
+  try {
+    // First attempt to delete normally
+    let response = await fetch(`/deleteWorkoutPlans/${planId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
+    });
 
-      fetchWorkoutPlans();
-      alert("Workout plan deleted successfully");
-    } catch (err) {
-      console.error("Error deleting workout plan:", err);
-      alert(err.message || "Failed to delete workout plan");
+    let result = await response.json();
+
+    if (!response.ok && result.requiresConfirmation) {
+      // Show confirmation dialog if plan has active members
+      const confirmed = window.confirm(
+        `This plan has ${result.memberCount} active member(s). Are you sure you want to delete it? This will remove all member assignments.`
+      );
+
+      if (confirmed) {
+        // Retry with force delete
+        response = await fetch(`/deleteWorkoutPlans/${planId}?forceDelete=true`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        result = await response.json();
+
+        if (!response.ok) throw new Error(result.error || 'Failed to delete workout plan');
+      } else {
+        return; // User cancelled
+      }
+    } else if (!response.ok) {
+      throw new Error(result.error || 'Failed to delete workout plan');
     }
-  };
 
+    // Refresh the plans list
+    const workoutResponse = await fetch('/api/workout-plans/available', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (workoutResponse.ok) {
+      const workoutPlans = await workoutResponse.json();
+      
+    }
+
+    
+    
+
+    fetchWorkoutPlans();
+    alert('Plan Deleted successfully ')
+
+  } catch (err) {
+    console.error('Error deleting workout plan:', err);
+    
+  }
+};
   const handleSubmitWorkoutPlan = async (e) => {
     e.preventDefault();
     try {
@@ -192,34 +227,55 @@ const handleDietInputChange = (e) => {
         ? parseInt(value) || 0
         : value,
   }));
-};
-  const handleDeleteDietPlan = async (planId) => {
-    if (!window.confirm("Are you sure you want to delete this diet plan?")) {
-      return;
-    }
+};const handleDeleteDietPlan = async (planId) => {
+  if (!window.confirm("Are you sure you want to delete this diet plan?")) {
+    return;
+  }
 
-    try {
-      const response = await fetch(`/deleteDietPlans/${planId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to delete diet plan");
+  try {
+    // First attempt to delete normally
+    let response = await fetch(`/deleteDietPlans/${planId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
+    });
 
-      alert("Diet plan deleted successfully");
-      fetchDietPlans();
-    } catch (err) {
-      console.error("Error deleting diet plan:", err);
-      alert(err.message || "Failed to delete diet plan");
+    let result = await response.json();
+
+    if (!response.ok && result.requiresConfirmation) {
+      // Show confirmation dialog if plan has active members
+      const confirmed = window.confirm(
+        `This plan has ${result.memberCount} active member(s). Are you sure you want to delete it? This will remove all member assignments.`
+      );
+
+      if (confirmed) {
+        // Retry with force delete
+        response = await fetch(`/deleteDietPlans/${planId}?forceDelete=true`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        result = await response.json();
+
+        if (!response.ok) throw new Error(result.error || 'Failed to delete diet plan');
+      } else {
+        return; // User cancelled
+      }
+    } else if (!response.ok) {
+      throw new Error(result.error || 'Failed to delete diet plan');
     }
-  };
 
+    // Refresh the plans list
+    fetchDietPlans();
+    alert('Diet plan deleted successfully');
+
+  } catch (err) {
+    console.error('Error deleting diet plan:', err);
+    alert(err.message || 'Failed to delete diet plan');
+  }
+};
   const handleSubmitDietPlan = async (e) => {
     e.preventDefault();
     try {
@@ -448,7 +504,7 @@ const handleDietInputChange = (e) => {
                   onChange={handleWorkoutInputChange}
                   className="w-full p-2 border rounded"
                   required
-                  maxLength="20"
+                  maxLength="100"
                 />
               </div>
 
@@ -558,7 +614,7 @@ const handleDietInputChange = (e) => {
                   onChange={handleDietInputChange}
                   className="w-full p-2 border rounded"
                   required
-                  maxLength="20"
+                  maxLength="100"
                 />
               </div>
 
@@ -650,7 +706,7 @@ const handleDietInputChange = (e) => {
                 <select
                   name="status"
                   value={newDietPlan.status}
-                  onChange={(e) => handleInputChange(e, setNewDietPlan)}
+                  onChange={handleDietInputChange}
                   className="w-full p-2 border rounded"
                   required
                 >

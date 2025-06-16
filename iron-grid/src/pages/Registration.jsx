@@ -108,7 +108,7 @@ const Registration = () => {
       // Redirect or show success message here
 
       if (formData.account_type == "member") {
-        navigate("/MemberRegistration");
+        navigate("/login");
       } else {
         navigate("/");
       }

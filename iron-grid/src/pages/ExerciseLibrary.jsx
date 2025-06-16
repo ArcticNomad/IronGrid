@@ -14,6 +14,8 @@ const ExerciseLibrary = () => {
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [selectedDay, setSelectedDay] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sets, setSets] = useState(3); // Default 3 sets
+const [reps, setReps] = useState(10); // Default 10 reps
   const navigate = useNavigate();
 
   const [newExercise, setNewExercise] = useState({
@@ -245,8 +247,8 @@ const ExerciseLibrary = () => {
           workout_plan_id: selectedPlanId,
           user_id: localStorage.getItem("user_id"),
           day_num: selectedDay,
-          sets: 3, // Default values
-          reps: 10  // Default values
+          sets: parseInt(sets), // Ensure number
+        reps: parseInt(reps)  
         }),
       });
 
@@ -511,90 +513,116 @@ const ExerciseLibrary = () => {
         )}
 
         {/* Add Exercise to Plan Modal */}
-        {showAddExerciseModal && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 p-4">
-            <div className="bg-white p-6 rounded-lg w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">Add Exercise to Plan</h3>
-                <button
-                  onClick={() => {
-                    setShowAddExerciseModal(false);
-                    setSelectedExercise(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <form onSubmit={handleAddToPlanSubmit}>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Select Plan</label>
-                  <select
-                    value={selectedPlanId}
-                    onChange={(e) => setSelectedPlanId(e.target.value)}
-                    className="w-full p-2 border rounded"
-                    required
-                  >
-                    <option value="">Select a plan</option>
-                    {workoutPlans.map(plan => (
-                      <option key={plan.workout_plan_id} value={plan.workout_plan_id}>
-                        {plan.plan_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Select Day</label>
-                  <select
-                    value={selectedDay}
-                    onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                    className="w-full p-2 border rounded"
-                    required
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7].map(dayNum => (
-                      <option key={dayNum} value={dayNum}>
-                        {getDayName(dayNum)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                {selectedExercise && (
-                  <div className="mb-4 p-4 bg-gray-100 rounded">
-                    <h4 className="font-semibold">Selected Exercise:</h4>
-                    <p>{selectedExercise.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {selectedExercise.calories} calories/min • {selectedExercise.difficulty}
-                    </p>
-                  </div>
-                )}
-                
-                <div className="flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddExerciseModal(false);
-                      setSelectedExercise(null);
-                    }}
-                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Adding...' : 'Add to Plan'}
-                  </button>
-                </div>
-              </form>
-            </div>
+   {showAddExerciseModal && (
+  <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 p-4">
+    <div className="bg-white p-6 rounded-lg w-full max-w-md">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-bold">Add Exercise to Plan</h3>
+        <button
+          onClick={() => {
+            setShowAddExerciseModal(false);
+            setSelectedExercise(null);
+          }}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form onSubmit={handleAddToPlanSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2">Select Plan</label>
+          <select
+            value={selectedPlanId}
+            onChange={(e) => setSelectedPlanId(e.target.value)}
+            className="w-full p-2 border rounded"
+            required
+          >
+            <option value="">Select a plan</option>
+            {workoutPlans.map(plan => (
+              <option key={plan.workout_plan_id} value={plan.workout_plan_id}>
+                {plan.plan_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2">Select Day</label>
+          <select
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+            className="w-full p-2 border rounded"
+            required
+          >
+            {[1, 2, 3, 4, 5, 6, 7].map(dayNum => (
+              <option key={dayNum} value={dayNum}>
+                {getDayName(dayNum)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2">Sets</label>
+          <input
+            type="number"
+            min="1"
+            max="20"
+            value={sets}
+            onChange={(e) => setSets(Math.max(1, Math.min(20, parseInt(e.target.value)) || 1))}
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2">Reps</label>
+          <input
+            type="number"
+            min="1"
+            max="100"
+            value={reps}
+            onChange={(e) => setReps(Math.max(1, Math.min(100, parseInt(e.target.value)) || 1))}
+            className="w-full p-2 border rounded"
+            required
+          />
+        </div>
+        
+        {selectedExercise && (
+          <div className="mb-4 p-4 bg-gray-100 rounded">
+            <h4 className="font-semibold">Selected Exercise:</h4>
+            <p>{selectedExercise.name}</p>
+            <p className="text-sm text-gray-600">
+              {selectedExercise.calories} calories/min • {selectedExercise.difficulty}
+            </p>
           </div>
         )}
+        
+        <div className="flex justify-end space-x-2">
+          <button
+            type="button"
+            onClick={() => {
+              setShowAddExerciseModal(false);
+              setSelectedExercise(null);
+            }}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Adding...' : 'Add to Plan'}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
 
         {/* Exercise Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
