@@ -328,7 +328,7 @@ const MemberDash = () => {
           <nav className="flex space-x-4">
             <button
               onClick={() => setActiveTab("dashboard")}
-              className={`py-2 px-4 font-medium ${
+              className={`py-2 px-4 font-medium hover:cursor-pointer ${
                 activeTab === "dashboard"
                   ? "border-b-2 border-red-500 text-red-400"
                   : "text-gray-400 hover:text-white"
@@ -336,26 +336,50 @@ const MemberDash = () => {
             >
               Dashboard
             </button>
-            <button
-              onClick={() => setActiveTab("workout")}
-              className={`py-2 px-4 font-medium ${
-                activeTab === "workout"
-                  ? "border-b-2 border-red-500 text-red-400"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Workout Plan
-            </button>
-            <button
-              onClick={() => setActiveTab("diet")}
-              className={`py-2 px-4 font-medium ${
-                activeTab === "diet"
-                  ? "border-b-2 red-blue-500 text-red-400"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Diet Plan
-            </button>
+            <div className="flex justify-between items-center gap-2 flex-col">
+  <div className="relative group">
+    <button
+      onClick={() => setActiveTab("workout")}
+      className={`py-2 px-4 font-medium hover:cursor-pointer ${
+        activeTab === "workout"
+          ? "border-b-2 border-red-500 text-red-400 hover:cursor-pointer"
+          : "text-gray-400 hover:text-white"
+      }`}
+    >
+      Workout Plan
+    </button>
+    
+    {/* Image that appears on button hover */}
+    <img 
+      className="mb-12 w-9 h-9 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2" 
+      src="report2.png" 
+      alt="Workout report" 
+    />
+  </div>
+</div>
+       
+          <div className="flex justify-between items-center gap-2 flex-col">
+  <div className="relative group">
+    <button
+      onClick={() => setActiveTab("diet")}
+      className={`py-2 px-4 font-medium  hover:cursor-pointer ${
+        activeTab === "diet"
+          ? "border-b-2 border-red-500 text-red-400"
+          : "text-gray-400 hover:text-white"
+      }`}
+    >
+      Diet Plan
+    </button>
+    
+    {/* Image that appears on button hover */}
+    <img 
+      className="mb-12 w-9 h-9 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2" 
+      src="plan2.png" 
+      alt="Workout report" 
+    />
+  </div>
+</div>
+            
           </nav>
         </div>
 
