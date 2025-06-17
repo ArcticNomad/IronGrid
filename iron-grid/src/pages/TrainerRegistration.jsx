@@ -8,28 +8,44 @@ const TrainerRegistration = () => {
   }
 
   let [showPopup, setShowPopup] = useState(true);
+  const[pass, setPass]=useState();
   let [mess,setmess]=useState('')
   const [userInfo, setUserInfo] = useState({ user_id: "", accountType: "" });
     const[showButton, SetShowButton]=useState(true);
   const navigate = useNavigate();
+useEffect(() => {
+  const user_id = localStorage.getItem("user_id");
+  const accountType = localStorage.getItem("account_type");
+  const member_id = localStorage.getItem("member_id");
+  const trainerStatus = localStorage.getItem("trainerStatus");
 
-    useEffect(() => {
-      const user_id = localStorage.getItem("user_id");
-      const accountType = localStorage.getItem("account_type");
-  
-      if (!user_id ) {
-        setShowPopup(true); // Show popup
-        SetShowButton(false);
-        setmess('Please Log in First')
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000); // navigate after 1.5s
-      } else {
-        setUserInfo({ user_id, accountType });
-        setmess('Please fill out the member registration form before continuing.');
-        SetShowButton(true);
-      }
-    }, [navigate]);
+  console.log(member_id);
+  console.log("trainer status", trainerStatus);
+
+  let shouldPass = false;
+
+  if (trainerStatus === 'NEW_TRAINER') {
+    setmess('Please fill out the Trainer registration form before continuing.');
+    SetShowButton(true);
+    setShowPopup(true);
+    setPass(true);
+    shouldPass = true;
+  } else {
+    setPass(false);
+  }
+
+  if (!shouldPass) {
+    setShowPopup(true);
+    SetShowButton(false);
+    setmess('Please Log in First');
+    setTimeout(() => {
+      navigate("/login");
+    }, 2000);
+  } else {
+    setUserInfo({ user_id, accountType });
+  }
+}, [navigate]);
+
 
   const [formData, setFormData] = useState({
     username: localStorage.getItem("username"),
@@ -103,6 +119,7 @@ const TrainerRegistration = () => {
           mes={
             mess
           }
+          showButton
         />
       )}
       <h2 className="text-2xl font-bold mb-6 text-center">

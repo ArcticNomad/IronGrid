@@ -50,14 +50,20 @@ const LoginPage = () => {
         
           localStorage.setItem("username", formData.username);
           localStorage.setItem("user_id", data.user_id);
+          localStorage.setItem('member_id',data.member_id)
+          localStorage.setItem('trainer_id',data.trainer_id
 
-        if (data.message === "NEW_MEMBER") {
+            
+          )
+          if (data.message === "NEW_MEMBER") {
+          localStorage.setItem('memberStatus',data.message)
           navigate("/MemberRegistration");
         } else if (data.message == "USER_IS_A_MEMBER") {
           navigate("/MemberDash");
         }
 
         if (data.message == "NEW_TRAINER") {
+          localStorage.setItem('trainerStatus',data.message)
           navigate("/TrainerRegistration");
         } else if (data.message == "USER_IS_A_TRAINER") {
           navigate("/TrainerDash");

@@ -58,7 +58,10 @@ const MemberDash = () => {
     const fetchData = async () => {
       try {
         const user_id = localStorage.getItem("user_id");
-        if (!user_id) {
+        const member_id=localStorage.getItem('member_id')
+        console.log(member_id)
+        
+        if (!member_id|| member_id=='undefined') {
           setShowPopup(true);
           setMessage("Please Log in First");
           setTimeout(() => navigate("/login"), 2000);
@@ -334,7 +337,7 @@ const MemberDash = () => {
             <div className="bg-gray-800 p-4 rounded-lg shadow hover:shadow-2xl border-1 border-white">
               <h3 className="text-lg font-semibold mb-2">Fitness Level</h3>
               <p className="text-2xl font-extrabold">
-                {memberData.fitnessLevel}/10
+                {memberData.fitnessLevel}/5
               </p>
             </div>
           </div>

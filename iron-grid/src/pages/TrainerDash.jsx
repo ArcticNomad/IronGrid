@@ -4,6 +4,8 @@ import ExerciseLibrary from "./ExerciseLibrary";
 import MealLibrary from "./MealLibrary";
 import Plans from "./Plans";
 import Profile from "./Profile";
+import { useEffect } from "react";
+import { use } from "react";
 
 export default function TrainerDash() {
   
@@ -20,8 +22,41 @@ export default function TrainerDash() {
     specialization: "Strength Training"
   };
 
+  const [showPopup, setShowPopup] = useState(false);
+  const [message, setMessage] = useState("");
+  useEffect(()=>{
+     try {
+        const user_id = localStorage.getItem("user_id");
+        const trainer_id=localStorage.getItem('trainer_id')
+        console.log(trainer_id)
+        
+        if (!trainer_id|| trainer_id=='undefined') {
+          setShowPopup(true);
+          setMessage("Please Log in First");
+          setTimeout(() => navigate("/login"), 2000);
+          return;
+        }
+      }catch(err){
+        alert(err)
+      }
+  })
+
   return (
     <div className="p-6 flex bg-gray-900 min-h-screen">
+       {showPopup && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-70 z-50">
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Notification</h2>
+            <p className="mb-4">{message}</p>
+            <button
+              onClick={() => setShowPopup(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       {/* Sidebar */}
       <div className="w-64 bg-gradient-to-b from-gray-500 to-gray-700 text-black p-4 border-1 rounded-lg">
         <div className="flex items-center space-x-2 p-4 mb-8 border-2 rounded-lg bg-gradient-to-b from-gray-400 to-gray-300">

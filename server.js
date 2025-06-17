@@ -1246,11 +1246,14 @@ app.post("/login", async (req, res) => {
       [userId]
     );
 
+    const member_id=members[0]
     // 3. Check trainer status (if you have trainer table)
     const [trainers] = await pool.query(
       "SELECT trainer_id FROM trainer WHERE user_id = ?",
       [userId]
     );
+
+    const trainer_id=trainers[0]
 
     // 4. Determine response
     if (accountType === "member") {
@@ -1260,6 +1263,7 @@ app.post("/login", async (req, res) => {
           message: "USER_IS_A_MEMBER",
           user_id: userId,
           accountType: accountType,
+          member_id:member_id
         });
       } else {
         return res.status(200).json({
@@ -1267,6 +1271,7 @@ app.post("/login", async (req, res) => {
           message: "NEW_MEMBER",
           user_id: userId,
           accountType: accountType,
+          
         });
       }
     } else if (accountType === "trainer") {
@@ -1276,6 +1281,7 @@ app.post("/login", async (req, res) => {
           message: "USER_IS_A_TRAINER",
           user_id: userId,
           accountType: accountType,
+          trainer_id:trainer_id
         });
       } else {
         return res.status(200).json({
@@ -2295,7 +2301,7 @@ app.get('/api/exercises', async (req, res) => {
 });
 app.delete('/api/workout-sessions/:sessionId', async (req, res) => {
   const sessionID = req.params.sessionId;
-  console.log('sessoino id ', sessionID)
+  console.log('sessoino id ', sessionID )
   const connection = await pool.getConnection();
 
   try {
