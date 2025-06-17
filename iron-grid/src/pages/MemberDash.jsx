@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MemberWorkoutPlan from "./MemberWorkoutPlan";
 import MemberDietPlan from "./MemberDietPlan";
+import MemberProgress from "./MemberProgress";
+import MemberWorkoutSession from "./MemberWorkoutSession";
 
 const MemberDash = () => {
   const navigate = useNavigate();
@@ -217,62 +219,70 @@ const MemberDash = () => {
     }
   };
 
- const handleDeletePlan = async (type) => {
-  if (!confirm(`Are you sure you want to permanently delete your ${type} plan?`)) {
-    return;
-  }
+  const handleDeletePlan = async (type) => {
+    if (
+      !confirm(`Are you sure you want to permanently delete your ${type} plan?`)
+    ) {
+      return;
+    }
 
-  setIsLoading(prev => ({ ...prev, [type]: true }));
-  
-  try {
-    const endpoint = type === "workout" 
-      ? "/api/member/delete-workout-plan" 
-      : "/api/member/delete-diet-plan";
+    setIsLoading((prev) => ({ ...prev, [type]: true }));
 
-    const response = await fetch(endpoint, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({
-        member_id: memberData.memberId
-      }),
-    });
+    try {
+      const endpoint =
+        type === "workout"
+          ? "/api/member/delete-workout-plan"
+          : "/api/member/delete-diet-plan";
 
-    if (response.ok) {
-      const data = await response.json();
-      setMemberData(prev => ({
-        ...prev,
-        [`active${type.charAt(0).toUpperCase() + type.slice(1)}Plan`]: "Not assigned"
-      }));
-      setMessage(`${type === "workout" ? "Workout" : "Diet"} plan deleted successfully!`);
-      setShowPopup(true);
-      
-      // Refresh member data
-      const user_id = localStorage.getItem("user_id");
-      const memberResponse = await fetch(`/api/member/${user_id}/data`, {
+      const response = await fetch(endpoint, {
+        method: "DELETE",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
+        body: JSON.stringify({
+          member_id: memberData.memberId,
+        }),
       });
-      if (memberResponse.ok) {
-        const newData = await memberResponse.json();
-        setMemberData(newData);
+
+      if (response.ok) {
+        const data = await response.json();
+        setMemberData((prev) => ({
+          ...prev,
+          [`active${type.charAt(0).toUpperCase() + type.slice(1)}Plan`]:
+            "Not assigned",
+        }));
+        setMessage(
+          `${
+            type === "workout" ? "Workout" : "Diet"
+          } plan deleted successfully!`
+        );
+        setShowPopup(true);
+
+        // Refresh member data
+        const user_id = localStorage.getItem("user_id");
+        const memberResponse = await fetch(`/api/member/${user_id}/data`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (memberResponse.ok) {
+          const newData = await memberResponse.json();
+          setMemberData(newData);
+        }
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.error || `Failed to delete ${type} plan`);
+        setShowPopup(true);
       }
-    } else {
-      const errorData = await response.json();
-      setMessage(errorData.error || `Failed to delete ${type} plan`);
+    } catch (err) {
+      console.error(`Error deleting ${type} plan:`, err);
+      setMessage(`Error deleting ${type} plan`);
       setShowPopup(true);
+    } finally {
+      setIsLoading((prev) => ({ ...prev, [type]: false }));
     }
-  } catch (err) {
-    console.error(`Error deleting ${type} plan:`, err);
-    setMessage(`Error deleting ${type} plan`);
-    setShowPopup(true);
-  } finally {
-    setIsLoading(prev => ({ ...prev, [type]: false }));
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white relative">
@@ -304,142 +314,221 @@ const MemberDash = () => {
       </header>
 
       <main className="relative px-6 pt-14 lg:px-8">
-        <section className="mb-8 mt-15">
+        <section className="mb-8 mt-15 ">
           <h2 className="text-2xl font-bold mb-2">
             Welcome, {memberData.name}!
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-gray-800 p-4 rounded-lg shadow hover:shadow-2xl border-1 border-white ">
               <h3 className="text-lg font-semibold mb-2">Current Weight</h3>
-              <p className="text-2xl font-extrabold">{memberData.currentWeight} kg</p>
+              <p className="text-2xl font-extrabold">
+                {memberData.currentWeight} kg
+              </p>
             </div>
             <div className="bg-gray-800 p-4 rounded-lg shadow hover:shadow-2xl border-1 border-white">
               <h3 className="text-lg font-semibold mb-2">Target Weight</h3>
-              <p className="text-2xl font-extrabold">{memberData.targetWeight} kg</p>
+              <p className="text-2xl font-extrabold">
+                {memberData.targetWeight} kg
+              </p>
             </div>
             <div className="bg-gray-800 p-4 rounded-lg shadow hover:shadow-2xl border-1 border-white">
               <h3 className="text-lg font-semibold mb-2">Fitness Level</h3>
-              <p className="text-2xl font-extrabold">{memberData.fitnessLevel}/10</p>
+              <p className="text-2xl font-extrabold">
+                {memberData.fitnessLevel}/10
+              </p>
             </div>
           </div>
         </section>
 
         <div className="mb-8 border-b border-gray-700">
-          <nav className="flex space-x-4">
-            <button
-              onClick={() => setActiveTab("dashboard")}
-              className={`py-2 px-4 font-medium hover:cursor-pointer ${
-                activeTab === "dashboard"
-                  ? "border-b-2 border-red-500 text-red-400"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Dashboard
-            </button>
+          <nav className="flex space-x-4 mt-8">
+             <div className="flex justify-between items-center gap-2 flex-col">
+              <div className="relative group">
+                <button
+                  onClick={() => setActiveTab("dashboard")}
+                  className={`py-2 px-4 font-medium hover:cursor-pointer ${
+                    activeTab === "dashboard"
+                      ? "border-b-2 border-red-500 text-red-400 hover:cursor-pointer"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Dashboard
+                </button>
+
+                {/* Image that appears on button hover */}
+                <img
+                  className="mb-12 w-9 h-9 mt 3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2"
+                  src="dashboard.png"
+                  alt="Workout report"
+                />
+              </div>
+            </div>
+
             <div className="flex justify-between items-center gap-2 flex-col">
-  <div className="relative group">
-    <button
-      onClick={() => setActiveTab("workout")}
-      className={`py-2 px-4 font-medium hover:cursor-pointer ${
-        activeTab === "workout"
-          ? "border-b-2 border-red-500 text-red-400 hover:cursor-pointer"
-          : "text-gray-400 hover:text-white"
-      }`}
-    >
-      Workout Plan
-    </button>
-    
-    {/* Image that appears on button hover */}
-    <img 
-      className="mb-12 w-9 h-9 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2" 
-      src="report2.png" 
-      alt="Workout report" 
-    />
-  </div>
-</div>
-       
-          <div className="flex justify-between items-center gap-2 flex-col">
-  <div className="relative group">
-    <button
-      onClick={() => setActiveTab("diet")}
-      className={`py-2 px-4 font-medium  hover:cursor-pointer ${
-        activeTab === "diet"
-          ? "border-b-2 border-red-500 text-red-400"
-          : "text-gray-400 hover:text-white"
-      }`}
-    >
-      Diet Plan
-    </button>
-    
-    {/* Image that appears on button hover */}
-    <img 
-      className="mb-12 w-9 h-9 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2" 
-      src="plan2.png" 
-      alt="Workout report" 
-    />
-  </div>
-</div>
-            
+              <div className="relative group">
+                <button
+                  onClick={() => setActiveTab("workout")}
+                  className={`py-2 px-4 font-medium hover:cursor-pointer ${
+                    activeTab === "workout"
+                      ? "border-b-2 border-red-500 text-red-400 hover:cursor-pointer"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Workout Plan
+                </button>
+
+                {/* Image that appears on button hover */}
+                <img
+                  className="mb-12 w-9 h-9 mt 3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2"
+                  src="report2.png"
+                  alt="Workout report"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center gap-2 flex-col">
+              <div className="relative group">
+                <button
+                  onClick={() => setActiveTab("diet")}
+                  className={`py-2 px-4 font-medium  hover:cursor-pointer ${
+                    activeTab === "diet"
+                      ? "border-b-2 border-red-500 text-red-400"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Diet Plan
+                </button>
+
+                {/* Image that appears on button hover */}
+                <img
+                  className="mb-12 w-9 mt-3 h-9 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2"
+                  src="plan2.png"
+                  alt="Workout report"
+                />
+              </div>
+            </div>
+
+
+
+
+            <div className="flex justify-between items-center gap-2 flex-col">
+              <div className="relative group">
+                <button
+                  onClick={() => setActiveTab("progress")}
+                  className={`py-2 px-4 font-medium  hover:cursor-pointer ${
+                    activeTab === "progress"
+                      ? "border-b-2 border-red-500 text-red-400"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Progress
+                </button>
+
+                {/* Image that appears on button hover */}
+                <img
+                  className="mb-12 w-9 mt-3 h-9 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2"
+                  src="roadmap.png"
+                  alt="roadmap report"
+                />
+              </div>
+            </div>
+
+              <div className="flex justify-between items-center gap-2 flex-col">
+              <div className="relative group">
+                <button
+                  onClick={() => setActiveTab("sessions")}
+                  className={`py-2 px-4 font-medium  hover:cursor-pointer ${
+                    activeTab === "sessions"
+                      ? "border-b-2 border-red-500 text-red-400"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Workout Sessions
+                </button>
+
+                {/* Image that appears on button hover */}
+                <img
+                  className="mb-12 w-9 mt-3 h-9 opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -bottom-4 left-1/2 transform -translate-x-1/2"
+                  src="weightlift.png"
+                  alt="roadmap report"
+                />
+              </div>
+            </div>
+
           </nav>
         </div>
 
         <div className="bg-gray-800 rounded-lg shadow-md p-6">
-           {activeTab === "dashboard" && (
-    <div>
-      <h1 className="text-3xl font-extrabold mb-6 text-red-400">Your Overview</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Workout Plan Card */}
-        <div className="bg-gray-700 p-6 rounded-lg border-2 border-white">
-          <h2 className="text-xl font-extrabold mb-6">Current Workout Plan</h2>
-          <div className="border-1 border-gray-400 shadow rounded-lg flex flex-col hover:translate-y-1 transition-all hover:shadow-2xl">
-            <div className="flex justify-center mb-2">
-              <p className="text-lg font-bold">{memberData.activeWorkoutPlan}</p>
-            </div>
-            {memberData.activeWorkoutPlan !== "Not assigned" ? (
-              <button
-                onClick={() => setActiveTab("workout")}
-                className="mt-4 bg-red-300 hover:bg-red-400 text-white font-bold py-2 px-4 rounded hover:cursor-pointer"
-              >
-                View Plan Details
-              </button>
-            ) : (
-              <button
-                onClick={() => setActiveTab("workout")}
-                className="mt-4 bg-red-300 hover:bg-red-400 text-white font-bold py-2 px-4 rounded hover:cursor-pointer"
-              >
-                Browse Plans
-              </button>
-            )}
-          </div>
-        </div>
+          {activeTab === "progress" && <MemberProgress memberId={memberData.memberId} />}
 
-        {/* Diet Plan Card - Now matching Workout Plan styling */}
-        <div className="bg-gray-700 p-6 rounded-lg border-2 border-white">
-          <h2 className="text-xl font-extrabold mb-6">Current Diet Plan</h2>
-          <div className="border-1 border-gray-400 shadow rounded-lg flex flex-col hover:translate-y-1 transition-all hover:shadow-2xl">
-            <div className="flex justify-center mb-2">
-              <p className="text-lg font-bold">{memberData.activeDietPlan}</p>
+          {activeTab === "sessions" && <MemberWorkoutSession memberId={memberData.memberId} />}
+
+          {activeTab === "dashboard" && (
+            <div>
+              <h1 className="text-3xl font-extrabold mb-6 text-red-400">
+                Your Overview
+              </h1>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Workout Plan Card */}
+                <div className="bg-gray-700 p-6 rounded-lg border-2 border-white">
+                  <h2 className="text-xl font-extrabold mb-6">
+                    Current Workout Plan
+                  </h2>
+                  <div className="border-1 border-gray-400 shadow rounded-lg flex flex-col hover:translate-y-1 transition-all hover:shadow-2xl">
+                    <div className="flex justify-center mb-2">
+                      <p className="text-lg font-bold">
+                        {memberData.activeWorkoutPlan}
+                      </p>
+                    </div>
+                    {memberData.activeWorkoutPlan !== "Not assigned" ? (
+                      <button
+                        onClick={() => setActiveTab("workout")}
+                        className="mt-4 bg-red-300 hover:bg-red-400 text-white font-bold py-2 px-4 rounded hover:cursor-pointer"
+                      >
+                        View Plan Details
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setActiveTab("workout")}
+                        className="mt-4 bg-red-300 hover:bg-red-400 text-white font-bold py-2 px-4 rounded hover:cursor-pointer"
+                      >
+                        Browse Plans
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Diet Plan Card - Now matching Workout Plan styling */}
+                <div className="bg-gray-700 p-6 rounded-lg border-2 border-white">
+                  <h2 className="text-xl font-extrabold mb-6">
+                    Current Diet Plan
+                  </h2>
+                  <div className="border-1 border-gray-400 shadow rounded-lg flex flex-col hover:translate-y-1 transition-all hover:shadow-2xl">
+                    <div className="flex justify-center mb-2">
+                      <p className="text-lg font-bold">
+                        {memberData.activeDietPlan}
+                      </p>
+                    </div>
+                    {memberData.activeDietPlan !== "Not assigned" ? (
+                      <button
+                        onClick={() => setActiveTab("diet")}
+                        className="mt-4 bg-red-300 hover:bg-red-400 text-white font-bold py-2 px-4 rounded hover:cursor-pointer"
+                      >
+                        View Plan Details
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setActiveTab("diet")}
+                        className="mt-4 bg-red-300 hover:bg-red-400 text-white font-bold py-2 px-4 rounded hover:cursor-pointer"
+                      >
+                        Browse Diet Plans
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            {memberData.activeDietPlan !== "Not assigned" ? (
-              <button
-                onClick={() => setActiveTab("diet")}
-                className="mt-4 bg-red-300 hover:bg-red-400 text-white font-bold py-2 px-4 rounded hover:cursor-pointer"
-              >
-                View Plan Details
-              </button>
-            ) : (
-              <button
-                onClick={() => setActiveTab("diet")}
-                className="mt-4 bg-red-300 hover:bg-red-400 text-white font-bold py-2 px-4 rounded hover:cursor-pointer"
-              >
-                Browse Diet Plans
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
+          )}
           {activeTab === "workout" && (
             <div>
               {memberData.activeWorkoutPlan === "Not assigned" ? (
@@ -586,37 +675,39 @@ const MemberDash = () => {
                 </div>
               ) : (
                 <div>
-  <div className="flex justify-between items-center mb-6">
-    <h1 className="text-3xl font-extrabold text-red-400">Your Workout Plan</h1>
-    <div className="relative group">
-      {/* Settings icon - always visible */}
-      <img 
-        className='w-9 h-9 hover:rounded-4xl hover:cursor-pointer transition-all hover:h-10 hover:w-10' 
-        src="gear.png" 
-        alt="settings" 
-      />
-      
-      {/* Buttons container - hidden by default, shown on hover */}
-      <div className="absolute right-0 mt-2 w-40 bg-red-400 rounded-lg shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-1 ">
-        <div className="py-1 flex flex-col justify-center items-center">
-          <button
-            onClick={() => handleChangePlan("workout")}
-            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 hover:cursor-pointer hover:rounded-2xl transition-all hover:w-[80%]"
-          >
-            Change Plan
-          </button>
-          <button
-            onClick={() => handleDeletePlan("workout")}
-            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 hover:cursor-pointer hover:rounded-2xl transition-all hover:w-[80%]"
-          >
-            Delete Plan
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <MemberWorkoutPlan memberId={memberData.memberId} />
-</div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-extrabold text-red-400">
+                      Your Workout Plan
+                    </h1>
+                    <div className="relative group">
+                      {/* Settings icon - always visible */}
+                      <img
+                        className="w-9 h-9 hover:rounded-4xl hover:cursor-pointer transition-all hover:h-10 hover:w-10"
+                        src="gear.png"
+                        alt="settings"
+                      />
+
+                      {/* Buttons container - hidden by default, shown on hover */}
+                      <div className="absolute right-0 mt-2 w-40 bg-red-400 rounded-lg shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-1 ">
+                        <div className="py-1 flex flex-col justify-center items-center">
+                          <button
+                            onClick={() => handleChangePlan("workout")}
+                            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 hover:cursor-pointer hover:rounded-2xl transition-all hover:w-[80%]"
+                          >
+                            Change Plan
+                          </button>
+                          <button
+                            onClick={() => handleDeletePlan("workout")}
+                            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 hover:cursor-pointer hover:rounded-2xl transition-all hover:w-[80%]"
+                          >
+                            Delete Plan
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <MemberWorkoutPlan memberId={memberData.memberId} />
+                </div>
               )}
             </div>
           )}
@@ -696,33 +787,35 @@ const MemberDash = () => {
               ) : (
                 <div>
                   <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-extrabold text-red-400">Your Diet Plan</h1>
-                   <div className="relative group">
-      {/* Settings icon - always visible */}
-      <img 
-       className='w-9 h-9 hover:rounded-4xl hover:cursor-pointer transition-all hover:h-10 hover:w-10' 
-        src="gear.png" 
-        alt="settings" 
-      />
-      
-      {/* Buttons container - hidden by default, shown on hover */}
-      <div className="absolute right-0 mt-2 w-40 bg-red-400 rounded-lg shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-1 ">
-        <div className="py-1">
-          <button
-            onClick={() => handleChangePlan("workout")}
-            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 hover:cursor-pointer hover:rounded-2xl transition-all hover:w-[80%]"
-          >
-            Change Plan
-          </button>
-          <button
-            onClick={() => handleDeletePlan("diet")}
-            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 hover:cursor-pointer hover:rounded-2xl transition-all hover:w-[80%]"
-          >
-            Delete Plan
-          </button>
-        </div>
-      </div>
-    </div>
+                    <h1 className="text-3xl font-extrabold text-red-400">
+                      Your Diet Plan
+                    </h1>
+                    <div className="relative group">
+                      {/* Settings icon - always visible */}
+                      <img
+                        className="w-9 h-9 hover:rounded-4xl hover:cursor-pointer transition-all hover:h-10 hover:w-10"
+                        src="gear.png"
+                        alt="settings"
+                      />
+
+                      {/* Buttons container - hidden by default, shown on hover */}
+                      <div className="absolute right-0 mt-2 w-40 bg-red-400 rounded-lg shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-1 ">
+                        <div className="py-1">
+                          <button
+                            onClick={() => handleChangePlan("workout")}
+                            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 hover:cursor-pointer hover:rounded-2xl transition-all hover:w-[80%]"
+                          >
+                            Change Plan
+                          </button>
+                          <button
+                            onClick={() => handleDeletePlan("diet")}
+                            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 hover:cursor-pointer hover:rounded-2xl transition-all hover:w-[80%]"
+                          >
+                            Delete Plan
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <MemberDietPlan memberId={memberData.memberId} />
                 </div>

@@ -1795,3 +1795,545 @@ app.delete('/api/member/delete-diet-plan', async (req, res) => {
     connection.release();
   }
 });
+
+// Add progress entry
+app.post('/api/progress', async (req, res) => {
+  const { member_id, weight, body_fat_percentage, muscle_mass, measurements, notes } = req.body;
+
+  if (!member_id || !weight) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'member_id and weight are required fields' 
+    });
+  }
+
+  try {
+    // Generate entry_id
+    const entry_id = `PE${Date.now().toString().slice(-8)}`;
+    
+    const [result] = await pool.query(
+      `INSERT INTO progress_entry 
+      (entry_id, member_id, weight, body_fat_percentage, muscle_mass, measurements, notes) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        entry_id,
+        member_id,
+        weight,
+        body_fat_percentage || null,
+        muscle_mass || null,
+        measurements ? JSON.stringify(measurements) : null,
+        notes || null
+      ]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Progress entry added successfully',
+      entry_id: entry_id
+    });
+
+  } catch (err) {
+    console.error("Error adding progress entry:", err);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to add progress entry',
+      details: err.message
+    });
+  }
+});
+
+// Get all progress entries for a member
+// Update your GET endpoint to ensure it always returns an array
+// Update your GET endpoint to ensure proper data retrieval
+app.get('/api/progress/:memberId', async (req, res) => {
+  const { memberId } = req.params;
+  
+  if (!memberId) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'memberId parameter is required' 
+    });
+  }
+
+  try {
+    const [entries] = await pool.query(
+      `SELECT 
+        entry_id,
+        member_id,
+        entry_date,
+        weight,
+        body_fat_percentage,
+        muscle_mass,
+        measurements,
+        notes
+      FROM progress_entry
+      WHERE member_id = ?
+      ORDER BY entry_date DESC`,
+      [memberId]
+    );
+
+    // Validate and transform the data
+    const formattedEntries = entries.map(entry => {
+      // Generate a temporary ID if missing
+      const entryId = entry.entry_id || `temp_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      
+      // Parse measurements safely
+      let measurements = null;
+      try {
+        measurements = entry.measurements ? JSON.parse(entry.measurements) : null;
+      } catch (e) {
+        console.error('Failed to parse measurements:', e);
+      }
+
+      return {
+        entry_id: entryId,
+        member_id: entry.member_id,
+        entry_date: entry.entry_date || new Date().toISOString(),
+        weight: entry.weight !== undefined && entry.weight !== null ? entry.weight : null,
+        body_fat_percentage: entry.body_fat_percentage !== undefined && entry.body_fat_percentage !== null ? entry.body_fat_percentage : null,
+        muscle_mass: entry.muscle_mass !== undefined && entry.muscle_mass !== null ? entry.muscle_mass : null,
+        measurements,
+        notes: entry.notes || ''
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      entries: formattedEntries
+    });
+  } catch (err) {
+    console.error("Error fetching progress entries:", err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch progress entries',
+      details: err.message,
+      entries: [] // Return empty array on error
+    });
+  }
+});
+
+// Get latest progress entry for a member
+app.get('/api/progress/latest/:memberId', async (req, res) => {
+  const { memberId } = req.params;
+  
+  if (!memberId) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'memberId parameter is required' 
+    });
+  }
+
+  try {
+    const [entries] = await pool.query(
+      `SELECT 
+        entry_id,
+        member_id,
+        entry_date,
+        weight,
+        body_fat_percentage,
+        muscle_mass,
+        measurements,
+        notes
+      FROM progress_entry
+      WHERE member_id = ?
+      ORDER BY entry_date DESC
+      LIMIT 1`,
+      [memberId]
+    );
+
+    if (entries.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No progress entries found',
+        entry: null
+      });
+    }
+
+    // Parse JSON measurements if they exist
+    const entry = {
+      ...entries[0],
+      measurements: entries[0].measurements ? JSON.parse(entries[0].measurements) : null
+    };
+
+    res.status(200).json({
+      success: true,
+      entry
+    });
+  } catch (err) {
+    console.error("Error fetching latest progress entry:", err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch latest progress entry',
+      details: err.message 
+    });
+  }
+});
+
+// Delete a progress entry
+app.delete('/api/progress/:entryId', async (req, res) => {
+  const { entryId } = req.params;
+  
+  if (!entryId) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'entryId parameter is required' 
+    });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `DELETE FROM progress_entry
+      WHERE entry_id = ?`,
+      [entryId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Progress entry not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Progress entry deleted successfully'
+    });
+  } catch (err) {
+    console.error("Error deleting progress entry:", err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete progress entry',
+      details: err.message 
+    });
+  }
+});
+
+
+app.post('/api/workout-sessions', async (req, res) => {
+  const { member_id, workout_plan_name, start_time, notes } = req.body;
+
+  if (!member_id) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'member_id is required' 
+    });
+  }
+
+  try {
+    let workout_plan_id = null;
+    
+    // If plan name was provided, look up the actual ID
+    if (workout_plan_name) {
+      const [plans] = await pool.query(
+        `SELECT workout_plan_id 
+         FROM workout_plan 
+         WHERE plan_name = ? AND status = 'active'`,
+        [workout_plan_name]
+      );
+      
+      if (plans.length > 0) {
+        workout_plan_id = plans[0].workout_plan_id;
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'No active workout plan found with that name'
+        });
+      }
+    }
+
+    // Generate session ID (10 chars max)
+    const session_id = `WS${Date.now().toString().slice(-8)}`;
+    
+    // Insert new session with the resolved ID
+    const [result] = await pool.query(
+      `INSERT INTO workout_session 
+      (session_id, member_id, workout_plan_id, start_time, notes) 
+      VALUES (?, ?, ?, ?, ?)`,
+      [
+        session_id, 
+        member_id, 
+        workout_plan_id, 
+        start_time || new Date().toISOString(), 
+        notes || null
+      ]
+    );
+
+    // Get the newly created session with plan name
+    const [session] = await pool.query(
+      `SELECT ws.*, wp.plan_name 
+       FROM workout_session ws
+       LEFT JOIN workout_plan wp ON ws.workout_plan_id = wp.workout_plan_id
+       WHERE ws.session_id = ?`,
+      [session_id]
+    );
+
+    res.status(201).json({ 
+      success: true,
+      session: session[0]
+    });
+  } catch (error) {
+    console.error('Error creating workout session:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to create workout session',
+      details: error.message
+    });
+  }
+});
+// End a workout session
+app.put('/api/workout-sessions/:sessionId/end', async (req, res) => {
+  const { sessionId } = req.params;
+  const { total_calories, session_rating, completed_percentage, notes } = req.body;
+
+  try {
+    // Update session with end time and optional fields
+    const [result] = await pool.query(
+      `UPDATE workout_session 
+       SET end_time = NOW(),
+           total_calories = ?,
+           session_rating = ?,
+           completed_percentage = ?,
+           notes = COALESCE(?, notes)
+       WHERE session_id = ? AND end_time IS NULL`,
+      [
+        total_calories || null,
+        session_rating || null,
+        completed_percentage || null,
+        notes || null,
+        sessionId
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Session not found or already ended'
+      });
+    }
+
+    // Get the updated session with plan name
+    const [session] = await pool.query(
+      `SELECT ws.*, wp.plan_name 
+       FROM workout_session ws
+       LEFT JOIN workout_plan wp ON ws.workout_plan_id = wp.workout_plan_id
+       WHERE ws.session_id = ?`,
+      [sessionId]
+    );
+
+    res.status(200).json({ 
+      success: true,
+      session: session[0]
+    });
+  } catch (error) {
+    console.error('Error ending workout session:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to end workout session',
+      details: error.message
+    });
+  }
+});
+
+// Get all workout sessions for a member
+app.get('/api/workout-sessions/:memberId', async (req, res) => {
+  const { memberId } = req.params;
+  
+  if (!memberId) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'memberId parameter is required' 
+    });
+  }
+
+  try {
+    const [sessions] = await pool.query(
+      `SELECT ws.*, wp.plan_name 
+       FROM workout_session ws
+       LEFT JOIN workout_plan wp ON ws.workout_plan_id = wp.workout_plan_id
+       WHERE ws.member_id = ?
+       ORDER BY ws.start_time DESC`,
+      [memberId]
+    );
+
+    res.status(200).json({ 
+      success: true,
+      sessions: sessions || []
+    });
+  } catch (error) {
+    console.error('Error fetching workout sessions:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch workout sessions',
+      details: error.message,
+      sessions: []
+    });
+  }
+});
+
+// Get active workout plans for member
+app.get('/api/member/:memberId/workout-plans', async (req, res) => {
+  const { memberId } = req.params;
+  
+  if (!memberId) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'memberId parameter is required' 
+    });
+  }
+
+  try {
+    const [plans] = await pool.query(
+      `SELECT wp.workout_plan_id AS plan_id, wp.plan_name
+       FROM member_workout_plans mwp
+       JOIN workout_plan wp ON mwp.workout_plan_id = wp.workout_plan_id
+       WHERE mwp.member_id = ? AND wp.status = 'active'`,
+      [memberId]
+    );
+
+    res.status(200).json({ 
+      success: true,
+      plans: plans || []
+    });
+  } catch (error) {
+    console.error('Error fetching active workout plans:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch active workout plans',
+      details: error.message,
+      plans: []
+    });
+  }
+});
+
+// Add exercise to session
+app.post('/api/workout-sessions/:sessionId/exercises', async (req, res) => {
+  const { sessionId } = req.params;
+  const { exercise_id, actual_sets, actual_reps, weight_used, notes } = req.body;
+
+  try {
+    // Check if session exists and is active
+    const [session] = await pool.query(
+      `SELECT 1 FROM workout_session WHERE session_id = ? AND end_time IS NULL`,
+      [sessionId]
+    );
+
+    if (session.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Session not found or already ended'
+      });
+    }
+
+    await pool.query(
+      `INSERT INTO session_details 
+      (session_id, exercise_id, actual_sets, actual_reps, weight_used, notes) 
+      VALUES (?, ?, ?, ?, ?, ?)`,
+      [sessionId, exercise_id, actual_sets, actual_reps, weight_used, notes]
+    );
+
+    res.status(201).json({ 
+      success: true,
+      message: 'Exercise added to session'
+    });
+  } catch (error) {
+    console.error('Error adding exercise to session:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to add exercise to session',
+      details: error.message
+    });
+  }
+});
+
+// Get exercises for a session
+app.get('/api/workout-sessions/:sessionId/exercises', async (req, res) => {
+  const { sessionId } = req.params;
+  
+  try {
+    const [exercises] = await pool.query(
+`SELECT sd.*, el.ex_name AS exercise_name, el.category, el.equipment_needed, el.difficulty
+ FROM session_details sd
+ JOIN exercise_library el ON sd.exercise_id = el.exercise_id
+ WHERE sd.session_id = ?`,
+      [sessionId]
+    );
+
+    res.status(200).json({ 
+      success: true,
+      exercises: exercises || []
+    });
+  } catch (error) {
+    console.error('Error fetching session exercises:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch session exercises',
+      details: error.message,
+      exercises: []
+    });
+  }
+});
+// Get all exercises
+app.get('/api/exercises', async (req, res) => {
+  try {
+    const [exercises] = await pool.query(
+      `SELECT exercise_id, ex_name AS exercise_name,category,equipment_needed,difficulty
+       FROM exercise_library`
+    );
+
+    res.status(200).json({ 
+      success: true,
+      exercises: exercises || []
+    });
+  } catch (error) {
+    console.error('Error fetching exercises:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch exercises',
+      details: error.message
+    });
+  }
+});
+app.delete('/api/workout-sessions/:sessionId', async (req, res) => {
+  const sessionID = req.params.sessionId;
+  console.log('sessoino id ', sessionID)
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 1. First delete from session_details (child table)
+    const [detailResult] = await connection.query(
+      'DELETE FROM session_details WHERE session_id = ?',
+      [sessionID]
+    );
+
+    // 2. Then delete from workout_session (parent table)
+    const [sessionResult] = await connection.query(
+      'DELETE FROM workout_session WHERE session_id = ?',
+      [sessionID]
+    );
+
+    if (sessionResult.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    await connection.commit();
+    res.status(200).json({ 
+      message: 'Session deleted successfully',
+      deletedSessionId: sessionID,
+      deletedExercises: detailResult.affectedRows 
+    });
+    
+  } catch (err) {
+    console.log(err)
+    await connection.rollback();
+    console.error('Error deleting workout session:', err);
+    res.status(500).json({ 
+      error: 'Failed to delete session',
+      details: err.message 
+    });
+  } finally {
+    connection.release();
+  }
+});

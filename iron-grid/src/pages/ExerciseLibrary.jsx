@@ -654,9 +654,7 @@ const [reps, setReps] = useState(10); // Default 10 reps
                   </button>
                   
                   <h3 
-                    className="text-xl font-bold mb-2 cursor-pointer hover:text-blue-600"
-                    onClick={() => handleExerciseClick(exercise)}
-                  >
+                    className="text-xl font-bold mb-2 w-28">
                     {exercise.name || 'Unnamed Exercise'}
                   </h3>
                   
