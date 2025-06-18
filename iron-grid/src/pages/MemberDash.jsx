@@ -58,10 +58,10 @@ const MemberDash = () => {
     const fetchData = async () => {
       try {
         const user_id = localStorage.getItem("user_id");
-        const member_id=localStorage.getItem('member_id')
-        console.log(member_id)
-        
-        if (!member_id|| member_id=='undefined') {
+        const member_id = localStorage.getItem("member_id");
+        console.log(member_id);
+
+        if (!member_id || member_id == "undefined") {
           setShowPopup(true);
           setMessage("Please Log in First");
           setTimeout(() => navigate("/login"), 2000);
@@ -345,7 +345,7 @@ const MemberDash = () => {
 
         <div className="mb-8 border-b border-gray-700">
           <nav className="flex space-x-4 mt-8">
-             <div className="flex justify-between items-center gap-2 flex-col">
+            <div className="flex justify-between items-center gap-2 flex-col">
               <div className="relative group">
                 <button
                   onClick={() => setActiveTab("dashboard")}
@@ -411,9 +411,6 @@ const MemberDash = () => {
               </div>
             </div>
 
-
-
-
             <div className="flex justify-between items-center gap-2 flex-col">
               <div className="relative group">
                 <button
@@ -436,7 +433,7 @@ const MemberDash = () => {
               </div>
             </div>
 
-              <div className="flex justify-between items-center gap-2 flex-col">
+            <div className="flex justify-between items-center gap-2 flex-col">
               <div className="relative group">
                 <button
                   onClick={() => setActiveTab("sessions")}
@@ -457,15 +454,16 @@ const MemberDash = () => {
                 />
               </div>
             </div>
-
           </nav>
         </div>
 
         <div className="bg-gray-800 rounded-lg shadow-md p-6">
-          {activeTab === "progress" && <MemberProgress memberId={memberData.memberId} />}
-
-          {activeTab === "sessions" && <MemberWorkoutSession memberId={memberData.memberId} />}
-
+          {activeTab === "progress" && (
+            <MemberProgress memberId={memberData.memberId} />
+          )}
+          {activeTab === "sessions" && (
+            <MemberWorkoutSession memberId={memberData.memberId} />
+          )}
           {activeTab === "dashboard" && (
             <div>
               <h1 className="text-3xl font-extrabold mb-6 text-red-400">

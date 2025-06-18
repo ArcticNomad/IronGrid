@@ -4,7 +4,7 @@ export default function DietPlan({ plan, onClose }) {
   const [meals, setMeals] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const navigate=useNavigate();
+  const navigate = useNavigate();
   const fetchPlanMeals = useCallback(async () => {
     if (!plan?.diet_plan_id) return;
 
@@ -28,9 +28,6 @@ export default function DietPlan({ plan, onClose }) {
       setIsLoading(false);
     }
   }, [plan?.diet_plan_id]);
-
-
-  
 
   const handleDeleteMeal = async (mealId) => {
     if (
@@ -259,25 +256,38 @@ export default function DietPlan({ plan, onClose }) {
               })}
             </div>
           ) : (
-  <div className="text-center py-8">
-    <p className="text-gray-500 mb-4">No meals added to this plan yet</p>
-    <button
-      onClick={() => {
-        onClose();
-        
-        navigate('/MealLibrary', { state: { planId: plan.diet_plan_id } });
-      }}
-      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-    >
-      <div className="flex items-center justify-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-        </svg>
-        Add Meals from Library
-      </div>
-    </button>
-  </div>
-)}
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">
+                No meals added to this plan yet
+              </p>
+              <button
+                onClick={() => {
+                  onClose();
+
+                  navigate("/MealLibrary", {
+                    state: { planId: plan.diet_plan_id },
+                  });
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Add Meals from Library
+                </div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

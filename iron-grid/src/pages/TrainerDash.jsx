@@ -8,8 +8,7 @@ import { useEffect } from "react";
 import { use } from "react";
 
 export default function TrainerDash() {
-  
- const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   const navigate = useNavigate();
 
@@ -19,31 +18,31 @@ export default function TrainerDash() {
     certification: "NASM Certified",
     clients: 24,
     activePlans: 18,
-    specialization: "Strength Training"
+    specialization: "Strength Training",
   };
 
   const [showPopup, setShowPopup] = useState(false);
   const [message, setMessage] = useState("");
-  useEffect(()=>{
-     try {
-        const user_id = localStorage.getItem("user_id");
-        const trainer_id=localStorage.getItem('trainer_id')
-        console.log(trainer_id)
-        
-        if (!trainer_id|| trainer_id=='undefined') {
-          setShowPopup(true);
-          setMessage("Please Log in First");
-          setTimeout(() => navigate("/login"), 2000);
-          return;
-        }
-      }catch(err){
-        alert(err)
+  useEffect(() => {
+    try {
+      const user_id = localStorage.getItem("user_id");
+      const trainer_id = localStorage.getItem("trainer_id");
+      console.log(trainer_id);
+
+      if (!trainer_id || trainer_id == "undefined") {
+        setShowPopup(true);
+        setMessage("Please Log in First");
+        setTimeout(() => navigate("/login"), 2000);
+        return;
       }
-  })
+    } catch (err) {
+      alert(err);
+    }
+  });
 
   return (
     <div className="p-6 flex bg-gray-900 min-h-screen">
-       {showPopup && (
+      {showPopup && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-70 z-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-xl font-bold mb-4">Notification</h2>
@@ -63,28 +62,34 @@ export default function TrainerDash() {
           <div className="w-10 h-10 flex items-center justify-center">
             <img src="./dumbell.png" alt="Iron Grid Logo" />
           </div>
-          <span className="text-xl font-extrabold px-2 text-shadow-gray-400">Iron Grid</span>
+          <span className="text-xl font-extrabold px-2 text-shadow-gray-400">
+            Iron Grid
+          </span>
         </div>
-        
+
         <nav>
           {[
-            { id: 'dashboard', icon: 'menu.png', label: 'Dashboard' },
-            { id: 'exercises', icon: 'exercise.png', label: 'Exercises' },
-            { id: 'meals', icon: 'iftar.png', label: 'Meals' },
-            { id: 'plans', icon: 'task.png', label: 'Plans' },
-            { id: 'clients', icon: 'customers.png', label: 'Clients' },
-            { id: 'schedule', icon: 'calendar.png', label: 'Schedule' },
-            { id: 'notifications', icon: 'notification.png', label: 'Notifications' },
-            { id: 'profile', icon: 'user.png', label: 'Profile' }
+            { id: "dashboard", icon: "menu.png", label: "Dashboard" },
+            { id: "exercises", icon: "exercise.png", label: "Exercises" },
+            { id: "meals", icon: "iftar.png", label: "Meals" },
+            { id: "plans", icon: "task.png", label: "Plans" },
+            { id: "clients", icon: "customers.png", label: "Clients" },
+            { id: "schedule", icon: "calendar.png", label: "Schedule" },
+            {
+              id: "notifications",
+              icon: "notification.png",
+              label: "Notifications",
+            },
+            { id: "profile", icon: "user.png", label: "Profile" },
           ].map((tab) => (
-            <button  
+            <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex font-semibold items-center space-x-2 w-full p-3 rounded-lg mb-1 text-left transition-colors ${
-                activeTab === tab.id ? 'bg-gray-700' : 'hover:bg-gray-400'
+                activeTab === tab.id ? "bg-gray-700" : "hover:bg-gray-400"
               }`}
             >
-              <img src={tab.icon} alt="" className="w-8 h-8"/>
+              <img src={tab.icon} alt="" className="w-8 h-8" />
               <span className="text-white">{tab.label}</span>
             </button>
           ))}
@@ -94,22 +99,32 @@ export default function TrainerDash() {
       {/* Main Content */}
       <div className="flex-1 p-8 overflow-auto border-2 rounded-lg mx-4 border-gray-400 bg-gray-800">
         {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && (
+        {activeTab === "dashboard" && (
           <div>
-            <h1 className="text-3xl font-extrabold mb-10 text-white">Trainer Dashboard</h1>
+            <h1 className="text-3xl font-extrabold mb-10 text-white">
+              Trainer Dashboard
+            </h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {/* Stats Cards */}
               <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-gray-500 text-sm font-medium">Total Clients</h3>
+                <h3 className="text-gray-500 text-sm font-medium">
+                  Total Clients
+                </h3>
                 <p className="text-2xl font-bold">{trainerData.clients}</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-gray-500 text-sm font-medium">Active Plans</h3>
+                <h3 className="text-gray-500 text-sm font-medium">
+                  Active Plans
+                </h3>
                 <p className="text-2xl font-bold">{trainerData.activePlans}</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-gray-500 text-sm font-medium">Certification</h3>
-                <p className="text-2xl font-bold">{trainerData.certification}</p>
+                <h3 className="text-gray-500 text-sm font-medium">
+                  Certification
+                </h3>
+                <p className="text-2xl font-bold">
+                  {trainerData.certification}
+                </p>
               </div>
             </div>
 
@@ -127,62 +142,64 @@ export default function TrainerDash() {
         )}
 
         {/* Exercises Tab */}
-        {activeTab === 'exercises' && (
-        //   <div>
-        //     <h1 className="text-3xl font-extrabold mb-10 text-white">Exercise Library</h1>
-        //     <div className="bg-white p-6 rounded-lg shadow">
-        //       <div className="flex justify-between items-center mb-4">
-        //         <h2 className="text-xl font-bold">Your Exercises</h2>
-        //         <button className="bg-blue-500 text-white px-4 py-2 rounded">
-        //           + Add Exercise
-        //         </button>
-        //       </div>
-        //       <p>List of exercises would appear here</p>
-        //     </div>
-        //   </div>
+        {activeTab === "exercises" && (
+          //   <div>
+          //     <h1 className="text-3xl font-extrabold mb-10 text-white">Exercise Library</h1>
+          //     <div className="bg-white p-6 rounded-lg shadow">
+          //       <div className="flex justify-between items-center mb-4">
+          //         <h2 className="text-xl font-bold">Your Exercises</h2>
+          //         <button className="bg-blue-500 text-white px-4 py-2 rounded">
+          //           + Add Exercise
+          //         </button>
+          //       </div>
+          //       <p>List of exercises would appear here</p>
+          //     </div>
+          //   </div>
 
-        <ExerciseLibrary/>
+          <ExerciseLibrary />
         )}
 
         {/* Meals Tab */}
-        {activeTab === 'meals' && (
-        //   <div>
-        //     <h1 className="text-3xl font-extrabold mb-10 text-white">Meal Library</h1>
-        //     <div className="bg-white p-6 rounded-lg shadow">
-        //       <div className="flex justify-between items-center mb-4">
-        //         <h2 className="text-xl font-bold">Your Meals</h2>
-        //         <button className="bg-blue-500 text-white px-4 py-2 rounded">
-        //           + Add Meal
-        //         </button>
-        //       </div>
-        //       <p>List of meals would appear here</p>
-        //     </div>
-        //   </div>
+        {activeTab === "meals" && (
+          //   <div>
+          //     <h1 className="text-3xl font-extrabold mb-10 text-white">Meal Library</h1>
+          //     <div className="bg-white p-6 rounded-lg shadow">
+          //       <div className="flex justify-between items-center mb-4">
+          //         <h2 className="text-xl font-bold">Your Meals</h2>
+          //         <button className="bg-blue-500 text-white px-4 py-2 rounded">
+          //           + Add Meal
+          //         </button>
+          //       </div>
+          //       <p>List of meals would appear here</p>
+          //     </div>
+          //   </div>
 
-        <MealLibrary/>
+          <MealLibrary />
         )}
 
         {/* Plans Tab */}
-        {activeTab === 'plans' && (
-        //   <div>
-        //     <h1 className="text-3xl font-extrabold mb-10 text-white">Training Plans</h1>
-        //     <div className="bg-white p-6 rounded-lg shadow">
-        //       <div className="flex justify-between items-center mb-4">
-        //         <h2 className="text-xl font-bold">Client Plans</h2>
-        //         <button className="bg-blue-500 text-white px-4 py-2 rounded">
-        //           + Create Plan
-        //         </button>
-        //       </div>
-        //       <p>List of workout and diet plans would appear here</p>
-        //     </div>
-        //   </div>
-        <Plans/>
+        {activeTab === "plans" && (
+          //   <div>
+          //     <h1 className="text-3xl font-extrabold mb-10 text-white">Training Plans</h1>
+          //     <div className="bg-white p-6 rounded-lg shadow">
+          //       <div className="flex justify-between items-center mb-4">
+          //         <h2 className="text-xl font-bold">Client Plans</h2>
+          //         <button className="bg-blue-500 text-white px-4 py-2 rounded">
+          //           + Create Plan
+          //         </button>
+          //       </div>
+          //       <p>List of workout and diet plans would appear here</p>
+          //     </div>
+          //   </div>
+          <Plans />
         )}
 
         {/* Clients Tab */}
-        {activeTab === 'clients' && (
+        {activeTab === "clients" && (
           <div>
-            <h1 className="text-3xl font-extrabold mb-10 text-white">Client Management</h1>
+            <h1 className="text-3xl font-extrabold mb-10 text-white">
+              Client Management
+            </h1>
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Your Clients</h2>
@@ -194,13 +211,18 @@ export default function TrainerDash() {
             </div>
           </div>
         )}
-         {/* Profile */}
-        {activeTab === 'profile' && (
-         <Profile/>
-        )}
+        {/* Profile */}
+        {activeTab === "profile" && <Profile />}
 
         {/* Other tabs would be implemented similarly */}
-        {!['dashboard', 'exercises', 'meals', 'plans', 'clients','profile'].includes(activeTab) && (
+        {![
+          "dashboard",
+          "exercises",
+          "meals",
+          "plans",
+          "clients",
+          "profile",
+        ].includes(activeTab) && (
           <div>
             <h1 className="text-3xl font-extrabold mb-10 text-white">
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}

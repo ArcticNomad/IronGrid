@@ -2,53 +2,52 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Popup from "./Popup"; // keep this only if you have it in a separate file
 
-
 const MemberRegistration = () => {
   const [showPopup, setShowPopup] = useState(false);
-  const[showButton, SetShowButton]=useState(true);
-  const[pass, setPass]=useState();
-  let [mess,setmess]=useState('')
+  const [showButton, SetShowButton] = useState(true);
+  const [pass, setPass] = useState();
+  let [mess, setmess] = useState("");
   const [userInfo, setUserInfo] = useState({ user_id: "", accountType: "" });
   const navigate = useNavigate();
 
-useEffect(() => {
-  const user_id = localStorage.getItem("user_id");
-  const accountType = localStorage.getItem("account_type");
-  const member_id = localStorage.getItem("member_id");
-  const memberStatus = localStorage.getItem("memberStatus");
+  useEffect(() => {
+    const user_id = localStorage.getItem("user_id");
+    const accountType = localStorage.getItem("account_type");
+    const member_id = localStorage.getItem("member_id");
+    const memberStatus = localStorage.getItem("memberStatus");
 
-  console.log(member_id);
-  console.log("member status", memberStatus);
+    console.log(member_id);
+    console.log("member status", memberStatus);
 
-  let shouldPass = false;
+    let shouldPass = false;
 
-  if (memberStatus === 'NEW_MEMBER') {
-    setmess('Please fill out the member registration form before continuing.');
-    SetShowButton(true);
-    setShowPopup(true);
-    setPass(true);
-    shouldPass = true;
-  } else {
-    setPass(false);
-  }
+    if (memberStatus === "NEW_MEMBER") {
+      setmess(
+        "Please fill out the member registration form before continuing."
+      );
+      SetShowButton(true);
+      setShowPopup(true);
+      setPass(true);
+      shouldPass = true;
+    } else {
+      setPass(false);
+    }
 
-  if (!shouldPass) {
-    setShowPopup(true);
-    SetShowButton(false);
-    setmess('Please Log in First');
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
-  } else {
-    setUserInfo({ user_id, accountType });
-  }
-}, [navigate]);
-
+    if (!shouldPass) {
+      setShowPopup(true);
+      SetShowButton(false);
+      setmess("Please Log in First");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } else {
+      setUserInfo({ user_id, accountType });
+    }
+  }, [navigate]);
 
   const onClose = () => {
     setShowPopup(false);
   };
-  
 
   const [formData, setFormData] = useState({
     username: "",
@@ -59,8 +58,7 @@ useEffect(() => {
     primary_goal: "maintenance",
     medical_conditions: "",
     dietary_preferences: "",
-    member_plan:''
-    
+    member_plan: "",
   });
 
   const fitnessLevels = [
@@ -71,9 +69,9 @@ useEffect(() => {
     { 5: "Athlete" },
   ];
 
-    const plans = [
+  const plans = [
     { value: "Basic", label: "Basic" },
-    { value: "Powerpro", label: "PowerPro" }
+    { value: "Powerpro", label: "PowerPro" },
   ];
 
   const goals = [
@@ -135,7 +133,7 @@ useEffect(() => {
           current_weight: parseFloat(formData.current_weight),
           target_weight: parseFloat(formData.target_weight),
           fitness_level: parseInt(formData.fitness_level),
-          member_plan: formData.member_plan
+          member_plan: formData.member_plan,
         }),
       });
 
@@ -159,11 +157,7 @@ useEffect(() => {
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
       {showPopup && (
-        <Popup
-          onClose={() => setShowPopup(false)}
-          mes={mess}
-          showButton
-        />
+        <Popup onClose={() => setShowPopup(false)} mes={mess} showButton />
       )}
 
       <h2 className="text-2xl font-bold mb-6 text-center">
@@ -260,25 +254,25 @@ useEffect(() => {
           </select>
         </div>
 
-          {/* Updated Plan Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Choose Plan
-        </label>
-        <select
-          name="member_plan" // Corrected name attribute
-          value={formData.member_plan}
-          onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          required
-        >
-          {plans.map((plan) => (
-            <option key={plan.value} value={plan.value}>
-              {plan.label}
-            </option>
-          ))}
-        </select>
-      </div>
+        {/* Updated Plan Selection */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Choose Plan
+          </label>
+          <select
+            name="member_plan" // Corrected name attribute
+            value={formData.member_plan}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            required
+          >
+            {plans.map((plan) => (
+              <option key={plan.value} value={plan.value}>
+                {plan.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Primary Goal */}
         <div>

@@ -38,7 +38,7 @@ const MemberWorkoutSession = ({ memberId }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (!memberId) return;
-      
+
       setIsLoading(true);
       try {
         // Fetch workout sessions
@@ -84,7 +84,7 @@ const MemberWorkoutSession = ({ memberId }) => {
           throw new Error("Failed to fetch exercises");
         }
         const exerciseData = await exerciseResponse.json();
-        console.log('exercise data',exerciseData);
+        console.log("exercise data", exerciseData);
         setAllExercises(exerciseData.exercises || []);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -140,41 +140,44 @@ const MemberWorkoutSession = ({ memberId }) => {
   };
 
   const handleDeleteSession = async (sessionId) => {
-  if (!window.confirm("Are you sure you want to delete this session?")) return;
+    if (!window.confirm("Are you sure you want to delete this session?"))
+      return;
 
-  setIsLoading(true);
-  try {
-    const response = await fetch(`/api/workout-sessions/${sessionId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/workout-sessions/${sessionId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to delete session");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete session");
+      }
+
+      setMessage("Session deleted successfully!");
+      setSessions((prev) =>
+        prev.filter((session) => session.session_id !== sessionId)
+      );
+      if (selectedSession?.session_id === sessionId) {
+        setSelectedSession(null);
+        setShowSessionDetails(false);
+      }
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      setMessage(error.message);
+    } finally {
+      setIsLoading(false);
+      setShowPopup(true);
     }
-
-    setMessage("Session deleted successfully!");
-    setSessions((prev) => prev.filter((session) => session.session_id !== sessionId));
-    if (selectedSession?.session_id === sessionId) {
-      setSelectedSession(null);
-      setShowSessionDetails(false);
-    }
-  } catch (error) {
-    console.error("Error deleting session:", error);
-    setMessage(error.message);
-  } finally {
-    setIsLoading(false);
-    setShowPopup(true);
-  }
-};
+  };
 
   const handleSubmitExercise = async (e) => {
     e.preventDefault();
     if (!selectedSession || !selectedExercise) return;
-    
+
     setIsLoading(true);
 
     try {
@@ -329,7 +332,7 @@ const MemberWorkoutSession = ({ memberId }) => {
   const handleAddExercise = (sessionId) => {
     const foundSession = sessions.find((s) => s.session_id === sessionId);
     if (!foundSession) return;
-    console.log(foundSession)
+    console.log(foundSession);
     setSelectedSession(foundSession);
     setShowAddExerciseModal(true);
     setSelectedExercise(null);
@@ -376,7 +379,6 @@ const MemberWorkoutSession = ({ memberId }) => {
         </button>
       </div>
 
-
       {showForm && (
         <div className="bg-gray-700 p-6 rounded-lg mb-8">
           <h2 className="text-xl font-bold mb-4">Start New Workout Session</h2>
@@ -394,10 +396,7 @@ const MemberWorkoutSession = ({ memberId }) => {
                 >
                   <option value="">Select a plan (optional)</option>
                   {activePlans.map((plan) => (
-                    <option
-                      key={plan.plan_name}
-                      value={plan.plan_name}
-                    >
+                    <option key={plan.plan_name} value={plan.plan_name}>
                       {plan.plan_name}
                     </option>
                   ))}
@@ -504,29 +503,27 @@ const MemberWorkoutSession = ({ memberId }) => {
                         >
                           End
                         </button>
-                        
-                        
                       )}
-                       <button 
-            onClick={() => handleDeleteSession(session.session_id)}
-            className="text-red-400 hover:text-red-600 transition-colors hover:cursor-pointer"
-            title="Delete entry"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
-          </button>
+                      <button
+                        onClick={() => handleDeleteSession(session.session_id)}
+                        className="text-red-400 hover:text-red-600 transition-colors hover:cursor-pointer"
+                        title="Delete entry"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -663,7 +660,7 @@ const MemberWorkoutSession = ({ memberId }) => {
           </div>
         </div>
       )}
-      
+
       {showAddExerciseModal && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-70 z-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">

@@ -119,68 +119,66 @@ export default function Plans() {
       [name]: type === "number" ? parseInt(value) || 0 : value,
     }));
   };
-const handleDeleteWorkoutPlan = async (planId) => {
+  const handleDeleteWorkoutPlan = async (planId) => {
     if (!window.confirm("Are you sure you want to delete this workout plan?")) {
       return;
     }
-  try {
-    // First attempt to delete normally
-    let response = await fetch(`/deleteWorkoutPlans/${planId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    try {
+      // First attempt to delete normally
+      let response = await fetch(`/deleteWorkoutPlans/${planId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      let result = await response.json();
+
+      if (!response.ok && result.requiresConfirmation) {
+        // Show confirmation dialog if plan has active members
+        const confirmed = window.confirm(
+          `This plan has ${result.memberCount} active member(s). Are you sure you want to delete it? This will remove all member assignments.`
+        );
+
+        if (confirmed) {
+          // Retry with force delete
+          response = await fetch(
+            `/deleteWorkoutPlans/${planId}?forceDelete=true`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          result = await response.json();
+
+          if (!response.ok)
+            throw new Error(result.error || "Failed to delete workout plan");
+        } else {
+          return; // User cancelled
+        }
+      } else if (!response.ok) {
+        throw new Error(result.error || "Failed to delete workout plan");
       }
-    });
 
-    let result = await response.json();
+      // Refresh the plans list
+      const workoutResponse = await fetch("/api/workout-plans/available", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-    if (!response.ok && result.requiresConfirmation) {
-      // Show confirmation dialog if plan has active members
-      const confirmed = window.confirm(
-        `This plan has ${result.memberCount} active member(s). Are you sure you want to delete it? This will remove all member assignments.`
-      );
-
-      if (confirmed) {
-        // Retry with force delete
-        response = await fetch(`/deleteWorkoutPlans/${planId}?forceDelete=true`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        result = await response.json();
-
-        if (!response.ok) throw new Error(result.error || 'Failed to delete workout plan');
-      } else {
-        return; // User cancelled
+      if (workoutResponse.ok) {
+        const workoutPlans = await workoutResponse.json();
       }
-    } else if (!response.ok) {
-      throw new Error(result.error || 'Failed to delete workout plan');
+
+      fetchWorkoutPlans();
+      alert("Plan Deleted successfully ");
+    } catch (err) {
+      console.error("Error deleting workout plan:", err);
     }
-
-    // Refresh the plans list
-    const workoutResponse = await fetch('/api/workout-plans/available', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-
-    if (workoutResponse.ok) {
-      const workoutPlans = await workoutResponse.json();
-      
-    }
-
-    
-    
-
-    fetchWorkoutPlans();
-    alert('Plan Deleted successfully ')
-
-  } catch (err) {
-    console.error('Error deleting workout plan:', err);
-    
-  }
-};
+  };
   const handleSubmitWorkoutPlan = async (e) => {
     e.preventDefault();
     try {
@@ -218,64 +216,70 @@ const handleDeleteWorkoutPlan = async (planId) => {
   };
 
   // Diet plan handlers (unchanged)
-const handleDietInputChange = (e) => {
-  const { name, value, type } = e.target;
-  setNewDietPlan((prev) => ({
-    ...prev,
-    [name]:
-      type === "number" || name.includes("_grams") || name === "daily_calories"
-        ? parseInt(value) || 0
-        : value,
-  }));
-};const handleDeleteDietPlan = async (planId) => {
-  if (!window.confirm("Are you sure you want to delete this diet plan?")) {
-    return;
-  }
-
-  try {
-    // First attempt to delete normally
-    let response = await fetch(`/deleteDietPlans/${planId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-
-    let result = await response.json();
-
-    if (!response.ok && result.requiresConfirmation) {
-      // Show confirmation dialog if plan has active members
-      const confirmed = window.confirm(
-        `This plan has ${result.memberCount} active member(s). Are you sure you want to delete it? This will remove all member assignments.`
-      );
-
-      if (confirmed) {
-        // Retry with force delete
-        response = await fetch(`/deleteDietPlans/${planId}?forceDelete=true`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        result = await response.json();
-
-        if (!response.ok) throw new Error(result.error || 'Failed to delete diet plan');
-      } else {
-        return; // User cancelled
-      }
-    } else if (!response.ok) {
-      throw new Error(result.error || 'Failed to delete diet plan');
+  const handleDietInputChange = (e) => {
+    const { name, value, type } = e.target;
+    setNewDietPlan((prev) => ({
+      ...prev,
+      [name]:
+        type === "number" ||
+        name.includes("_grams") ||
+        name === "daily_calories"
+          ? parseInt(value) || 0
+          : value,
+    }));
+  };
+  const handleDeleteDietPlan = async (planId) => {
+    if (!window.confirm("Are you sure you want to delete this diet plan?")) {
+      return;
     }
 
-    // Refresh the plans list
-    fetchDietPlans();
-    alert('Diet plan deleted successfully');
+    try {
+      // First attempt to delete normally
+      let response = await fetch(`/deleteDietPlans/${planId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-  } catch (err) {
-    console.error('Error deleting diet plan:', err);
-    alert(err.message || 'Failed to delete diet plan');
-  }
-};
+      let result = await response.json();
+
+      if (!response.ok && result.requiresConfirmation) {
+        // Show confirmation dialog if plan has active members
+        const confirmed = window.confirm(
+          `This plan has ${result.memberCount} active member(s). Are you sure you want to delete it? This will remove all member assignments.`
+        );
+
+        if (confirmed) {
+          // Retry with force delete
+          response = await fetch(
+            `/deleteDietPlans/${planId}?forceDelete=true`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          result = await response.json();
+
+          if (!response.ok)
+            throw new Error(result.error || "Failed to delete diet plan");
+        } else {
+          return; // User cancelled
+        }
+      } else if (!response.ok) {
+        throw new Error(result.error || "Failed to delete diet plan");
+      }
+
+      // Refresh the plans list
+      fetchDietPlans();
+      alert("Diet plan deleted successfully");
+    } catch (err) {
+      console.error("Error deleting diet plan:", err);
+      alert(err.message || "Failed to delete diet plan");
+    }
+  };
   const handleSubmitDietPlan = async (e) => {
     e.preventDefault();
     try {
@@ -329,7 +333,9 @@ const handleDietInputChange = (e) => {
         <div className="bg-white bg-opacity-90 p-6 rounded-lg shadow-lg backdrop-blur-sm bg-gradient-to-b from-gray-100 to-gray-300">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2 border-2 border-white rounded-lg px-2 bg-gradient-to-l from-gray-200 to-gray-500">
-              <h2 className="text-2xl font-bold text-gray-800">Workout Plans</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Workout Plans
+              </h2>
               <img
                 src="./work.gif"
                 alt="Workout animation"
@@ -363,12 +369,15 @@ const handleDietInputChange = (e) => {
                       {plan.plan_name || "New Workout Plan"}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      {plan.duration_weeks} weeks • {plan.duration_session} mins/session • {plan.difficulty_level}
+                      {plan.duration_weeks} weeks • {plan.duration_session}{" "}
+                      mins/session • {plan.difficulty_level}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleDeleteWorkoutPlan(plan.workout_plan_id)}
+                      onClick={() =>
+                        handleDeleteWorkoutPlan(plan.workout_plan_id)
+                      }
                       className="p-1 text-red-600 hover:text-white hover:bg-red-600 rounded-full transition-colors"
                       title="Delete Plan"
                     >
@@ -407,86 +416,85 @@ const handleDietInputChange = (e) => {
           </div>
         </div>
 
-     
         {/* Diet Plans Card */}
-<div className="bg-white bg-opacity-90 bg-gradient-to-b from-gray-100 to-gray-300 p-6 rounded-lg shadow-lg backdrop-blur-sm mt-10">
-  <div className="flex justify-between items-center mb-4">
-    <div className="flex items-center gap-2 border-2 border-white rounded-lg px-2 bg-gradient-to-l from-gray-200 to-gray-500">
-      <h2 className="text-2xl font-bold text-gray-800">Meal Plans</h2>
-      <img
-        src="./diet.gif"
-        alt="Diet animation"
-        className="w-12 h-12 object-cover rounded-full"
-      />
-    </div>
-    <button
-      onClick={() => setShowDietForm(true)}
-      className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
-    >
-      Create New
-    </button>
-  </div>
-  <p className="text-gray-800 font-semibold mb-4">
-    List of meal and diet plans
-  </p>
-
-  <div className="mt-6 space-y-4">
-    {dietPlans.length > 0 ? (
-      dietPlans.map((plan, index) => (
-        <div
-          key={index}
-          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 bg-white flex justify-between items-center"
-        >
-          <div>
-            <h3 className="font-semibold">
-              {plan.plan_name || "New Diet Plan"}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {plan.daily_calories} Calories • Protein:{" "}
-              {plan.protein_grams}g • Carbs: {plan.carbs_grams}g •
-              Fat: {plan.fat_grams}g
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="bg-white bg-opacity-90 bg-gradient-to-b from-gray-100 to-gray-300 p-6 rounded-lg shadow-lg backdrop-blur-sm mt-10">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2 border-2 border-white rounded-lg px-2 bg-gradient-to-l from-gray-200 to-gray-500">
+              <h2 className="text-2xl font-bold text-gray-800">Meal Plans</h2>
+              <img
+                src="./diet.gif"
+                alt="Diet animation"
+                className="w-12 h-12 object-cover rounded-full"
+              />
+            </div>
             <button
-              onClick={() => handleDeleteDietPlan(plan.diet_plan_id)}
-              className="p-1 text-red-600 hover:text-white hover:bg-red-600 rounded-full transition-colors"
-              title="Delete Plan"
+              onClick={() => setShowDietForm(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
+              Create New
             </button>
-            <img
-              onClick={() => {
-                setSelectedDietPlan(plan);
-                setDietEye(true);
-              }}
-              className="w-7 h-7 hover:h-8 hover:w-8 hover:bg-white rounded-4xl hover:transition-all hover:cursor-pointer"
-              src="./eye.png"
-              alt="preview"
-            />
+          </div>
+          <p className="text-gray-800 font-semibold mb-4">
+            List of meal and diet plans
+          </p>
+
+          <div className="mt-6 space-y-4">
+            {dietPlans.length > 0 ? (
+              dietPlans.map((plan, index) => (
+                <div
+                  key={index}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 bg-white flex justify-between items-center"
+                >
+                  <div>
+                    <h3 className="font-semibold">
+                      {plan.plan_name || "New Diet Plan"}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {plan.daily_calories} Calories • Protein:{" "}
+                      {plan.protein_grams}g • Carbs: {plan.carbs_grams}g • Fat:{" "}
+                      {plan.fat_grams}g
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDeleteDietPlan(plan.diet_plan_id)}
+                      className="p-1 text-red-600 hover:text-white hover:bg-red-600 rounded-full transition-colors"
+                      title="Delete Plan"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                    <img
+                      onClick={() => {
+                        setSelectedDietPlan(plan);
+                        setDietEye(true);
+                      }}
+                      className="w-7 h-7 hover:h-8 hover:w-8 hover:bg-white rounded-4xl hover:transition-all hover:cursor-pointer"
+                      src="./eye.png"
+                      alt="preview"
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <p className="text-gray-500">No diet plans created yet</p>
+              </div>
+            )}
           </div>
         </div>
-      ))
-    ) : (
-      <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-        <p className="text-gray-500">No diet plans created yet</p>
-      </div>
-    )}
-  </div>
-</div>
       </div>
 
       {/* Workout Plan Form Modal */}
@@ -509,7 +517,9 @@ const handleDietInputChange = (e) => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Duration (weeks)</label>
+                <label className="block text-gray-700 mb-2">
+                  Duration (weeks)
+                </label>
                 <input
                   type="number"
                   name="duration_weeks"
@@ -523,7 +533,9 @@ const handleDietInputChange = (e) => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Session Duration (mins)</label>
+                <label className="block text-gray-700 mb-2">
+                  Session Duration (mins)
+                </label>
                 <input
                   type="number"
                   name="duration_session"
@@ -537,7 +549,9 @@ const handleDietInputChange = (e) => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Difficulty Level</label>
+                <label className="block text-gray-700 mb-2">
+                  Difficulty Level
+                </label>
                 <select
                   name="difficulty_level"
                   value={newWorkoutPlan.difficulty_level}
@@ -568,7 +582,9 @@ const handleDietInputChange = (e) => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Notes (Optional)</label>
+                <label className="block text-gray-700 mb-2">
+                  Notes (Optional)
+                </label>
                 <textarea
                   name="notes"
                   value={newWorkoutPlan.notes}
@@ -600,7 +616,7 @@ const handleDietInputChange = (e) => {
       )}
 
       {/* Diet Plan Form Modal (unchanged) */}
-     {showDietForm && (
+      {showDietForm && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-4">Create New Diet Plan</h3>
@@ -751,22 +767,22 @@ const handleDietInputChange = (e) => {
       )}
 
       {workoutEye && selectedWorkoutPlan && (
-        <WorkoutPlan 
-          plan={selectedWorkoutPlan} 
+        <WorkoutPlan
+          plan={selectedWorkoutPlan}
           onClose={() => {
             setWorkoutEye(false);
             setSelectedWorkoutPlan(null);
-          }} 
+          }}
         />
       )}
 
       {dietEye && selectedDietPlan && (
-        <DietPlan 
-          plan={selectedDietPlan} 
+        <DietPlan
+          plan={selectedDietPlan}
           onClose={() => {
             setDietEye(false);
             setSelectedDietPlan(null);
-          }} 
+          }}
         />
       )}
     </div>

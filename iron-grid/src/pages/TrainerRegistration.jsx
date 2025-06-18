@@ -8,44 +8,45 @@ const TrainerRegistration = () => {
   }
 
   let [showPopup, setShowPopup] = useState(true);
-  const[pass, setPass]=useState();
-  let [mess,setmess]=useState('')
+  const [pass, setPass] = useState();
+  let [mess, setmess] = useState("");
   const [userInfo, setUserInfo] = useState({ user_id: "", accountType: "" });
-    const[showButton, SetShowButton]=useState(true);
+  const [showButton, SetShowButton] = useState(true);
   const navigate = useNavigate();
-useEffect(() => {
-  const user_id = localStorage.getItem("user_id");
-  const accountType = localStorage.getItem("account_type");
-  const member_id = localStorage.getItem("member_id");
-  const trainerStatus = localStorage.getItem("trainerStatus");
+  useEffect(() => {
+    const user_id = localStorage.getItem("user_id");
+    const accountType = localStorage.getItem("account_type");
+    const member_id = localStorage.getItem("member_id");
+    const trainerStatus = localStorage.getItem("trainerStatus");
 
-  console.log(member_id);
-  console.log("trainer status", trainerStatus);
+    console.log(member_id);
+    console.log("trainer status", trainerStatus);
 
-  let shouldPass = false;
+    let shouldPass = false;
 
-  if (trainerStatus === 'NEW_TRAINER') {
-    setmess('Please fill out the Trainer registration form before continuing.');
-    SetShowButton(true);
-    setShowPopup(true);
-    setPass(true);
-    shouldPass = true;
-  } else {
-    setPass(false);
-  }
+    if (trainerStatus === "NEW_TRAINER") {
+      setmess(
+        "Please fill out the Trainer registration form before continuing."
+      );
+      SetShowButton(true);
+      setShowPopup(true);
+      setPass(true);
+      shouldPass = true;
+    } else {
+      setPass(false);
+    }
 
-  if (!shouldPass) {
-    setShowPopup(true);
-    SetShowButton(false);
-    setmess('Please Log in First');
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
-  } else {
-    setUserInfo({ user_id, accountType });
-  }
-}, [navigate]);
-
+    if (!shouldPass) {
+      setShowPopup(true);
+      SetShowButton(false);
+      setmess("Please Log in First");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } else {
+      setUserInfo({ user_id, accountType });
+    }
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     username: localStorage.getItem("username"),
@@ -114,13 +115,7 @@ useEffect(() => {
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
       {showPopup && (
-        <Popup
-          onClose={() => setShowPopup(false)}
-          mes={
-            mess
-          }
-          showButton
-        />
+        <Popup onClose={() => setShowPopup(false)} mes={mess} showButton />
       )}
       <h2 className="text-2xl font-bold mb-6 text-center">
         Trainer Registration
