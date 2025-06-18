@@ -675,7 +675,7 @@ const [reps, setReps] = useState(10); // Default 10 reps
                     <span className="font-medium">Calories/min:</span> {exercise.calories || '0'}
                   </p>
                   
-                  <div className="my-3 p-2 bg-gray-200 rounded h-9 overflow-hidden hover:h-45 transition-all">
+                  <div className="my-3 p-2 bg-gray-200 rounded h-9 overflow-y-scroll  scrollbar-hide hover:h-45 transition-all">
                     <p className="text-gray-800 font-semibold">Instructions</p>
                     <p className="text-gray-600 text-sm mt-1">
                       {exercise.instructions || 'No instructions provided'}

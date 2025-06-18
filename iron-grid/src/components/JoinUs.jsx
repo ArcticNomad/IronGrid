@@ -39,7 +39,8 @@ const FitnessForm = () => {
       </div>
       
       {/* Content Container */}
-      <div className="relative z-10 w-full max-w-6xl px-4">
+      <div href className="relative z-10 w-full max-w-6xl px-4">
+        <a href="joinUs"></a>
         <div className="text-center md:text-left">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
             TRANSFORM YOUR <span className="text-yellow-400">FITNESS</span> <br />

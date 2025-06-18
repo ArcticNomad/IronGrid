@@ -5,12 +5,19 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
 
 const navigation = [
-  { name: 'CONTACT', href: '#' },
-  { name: 'PRICES', href: '#' },
-  { name: 'TRAINERS', href: '#' },
-  { name: 'WHY US', href: '#' },
-]
-
+  { name: 'CONTACT', href: '#contact' },
+  { name: 'PRICES', href: '#pricing' },
+  { name: 'TRAINERS', href: '#trainers' },
+  { name: 'WHY US', href: '#why-us' },
+];
+const scrollToSection = (id) => {
+  const element = document.getElementById(id);
+  if (element) {
+    element.scrollIntoView({
+      behavior: 'smooth'
+    });
+  }
+};
 function navigateToReg(){}
 
 export default function Hero() {
@@ -46,11 +53,19 @@ export default function Hero() {
             </button>
           </div>
           <div className="hidden lg:flex lg:gap-x-12">
-            {navigation.map((item) => (
-              <a key={item.name} href={item.href} className="text-med font-bold text-white px-5 ">
-                {item.name}
-              </a>
-            ))}
+           {navigation.map((item) => (
+  <a 
+    key={item.name} 
+    href={item.href}
+    onClick={(e) => {
+      e.preventDefault();
+      scrollToSection(item.href.substring(1)); // Remove the # to get the ID
+    }}
+    className="text-med font-bold text-white px-5 hover:text-yellow-400 transition-colors"
+  >
+    {item.name}
+  </a>
+))}
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
             <Link to="/login" className="text-xl font-bold text-white border-2 rounded-xl flex justify-center items-center  px-3 py-1">

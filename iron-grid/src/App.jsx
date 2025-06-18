@@ -132,7 +132,7 @@ const pricingData = [
       </section>
 
       {/* Why Us Section */}
-      <section className="why-us-section py-20 bg-gradient-to-b from-gray-800 to-gray-900">
+      <section id='why-us' className="why-us-section py-20 bg-gradient-to-b from-gray-800 to-gray-900">
         <WhyUs />
       </section>
 
@@ -156,7 +156,7 @@ const pricingData = [
       </section>
 
       {/* Pricing Section */}
-      <section className="pricing-section py-24 bg-gray-900">
+      <section id='pricing' className="pricing-section py-24 bg-gray-900">
   <div className="container mx-auto px-4">
     <h2 className="text-center text-4xl md:text-5xl font-bold uppercase tracking-wide mb-16">
       <span className="relative pb-2">
@@ -173,7 +173,7 @@ const pricingData = [
 </section>
 
  {/* Trainers Section */}
-      <section className="trainers-section relative py-24 bg-gradient-to-b from-gray-900 to-gray-800">
+      <section id='trainers' className="trainers-section relative py-24 bg-gradient-to-b from-gray-900 to-gray-800">
         <div className="container mx-auto px-4">
           <h2 className="absolute top-10 left-0 right-0 text-center text-4xl md:text-5xl font-bold uppercase tracking-wide">
             OUR <span className="text-red-400 underline">TRAINERS</span>
@@ -192,7 +192,7 @@ const pricingData = [
         </div>
       </section>
 
-        <section className="hero-section">
+        <section id='contact' className="hero-section">
         <JoinUs />
       </section>
     
